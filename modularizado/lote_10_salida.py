@@ -1,5 +1,11 @@
 """Lote 9: ordena las columnas, guarda los csv finales e imprime el resumen."""
 
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from modularizado import config
 from modularizado.utilidades import cargar_intermedio, titulo
 
@@ -21,7 +27,7 @@ def resumen(entrenamiento, prueba):
     print("Resumen del preprocesamiento")
     print("-" * 40)
     print(f"Columna objetivo: {config.OBJETIVO}")
-    print(f"Columnas excluidas por fuga o redundancia: {list(config.COLUMNAS_EXCLUIDAS.keys())}")
+    print(f"Columnas excluidas por fuga o redundancia: {list(config.motivos_exclusion())}")
     print()
     print(f"Entrenamiento: {entrenamiento.shape[0]} filas, {entrenamiento.shape[1]} columnas, "
           f"{entrenamiento.isna().sum().sum()} faltantes")
@@ -38,10 +44,10 @@ def resumen(entrenamiento, prueba):
 
 def ejecutar():
     """Genera los dos archivos listos para entrenar y evaluar."""
-    titulo("Lote 9: resultado final")
+    titulo("Lote 10: resultado final")
 
-    entrenamiento = ordenar_columnas(cargar_intermedio("08_entrenamiento"))
-    prueba = ordenar_columnas(cargar_intermedio("08_prueba"))
+    entrenamiento = ordenar_columnas(cargar_intermedio("09_entrenamiento"))
+    prueba = ordenar_columnas(cargar_intermedio("09_prueba"))
 
     guardar_finales(entrenamiento, prueba)
     resumen(entrenamiento, prueba)

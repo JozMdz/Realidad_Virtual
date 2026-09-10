@@ -1,5 +1,11 @@
 """Lote 3: elige el objetivo y quita columnas con fuga de informacion o redundantes."""
 
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import pandas as pd
 
 from modularizado import config
@@ -19,6 +25,10 @@ def evidencia_estimaciones(datos):
     print()
     print("Correlacion entre ellas (1.0 = identicas):")
     print(datos[columnas].corr().round(2))
+    print()
+    print("Criterio: se excluye lo que estima el desenlace, no lo que describe al paciente.")
+    print("scoma y sps tambien salen de un modelo segun la ficha, pero son puntajes de")
+    print("gravedad al dia 3, asi que se conservan.")
 
 
 def evidencia_dzclass(datos):
@@ -45,17 +55,37 @@ def evidencia_severidad(datos):
     print("No son identicas, se conservan ambas.")
 
 
+def evidencia_posteriores(datos):
+    """Muestra que dnr, los costos y avtisst reflejan lo ocurrido durante la estancia."""
+    columnas = [c for c in config.COLUMNAS_POSTERIORES if c != "dnr"]
+    print("Promedio segun si el paciente murio en el hospital:")
+    print(datos.groupby(config.OBJETIVO)[columnas].mean().round(1))
+    print()
+    print("Distribucion de dnr por hospdead (% de cada columna):")
+    print((pd.crosstab(datos["dnr"], datos[config.OBJETIVO], normalize="columns") * 100).round(1))
+
+
+def columnas_marcadas_por_uci(datos):
+    """Busca columnas que la ficha oficial marca con rol Other, que no son predictoras."""
+    if not config.RUTA_DICCIONARIO.exists():
+        return []
+    diccionario = pd.read_csv(config.RUTA_DICCIONARIO)
+    nombres = [
+        nombre.strip().lower().replace(" ", "_").replace(".", "_")
+        for nombre in diccionario.loc[diccionario["role"] == "Other", "name"]
+    ]
+    return [nombre for nombre in nombres if nombre in datos.columns]
+
+
 def tabla_exclusion():
     """Devuelve la lista de columnas excluidas con su motivo."""
-    return pd.DataFrame({
-        "columna": list(config.COLUMNAS_EXCLUIDAS.keys()),
-        "motivo": list(config.COLUMNAS_EXCLUIDAS.values()),
-    })
+    motivos = config.motivos_exclusion()
+    return pd.DataFrame({"columna": list(motivos), "motivo": list(motivos.values())})
 
 
 def aplicar_exclusion(datos):
     """Elimina las columnas excluidas del dataset."""
-    return datos.drop(columns=list(config.COLUMNAS_EXCLUIDAS.keys()))
+    return datos.drop(columns=list(config.motivos_exclusion()))
 
 
 def ejecutar():
@@ -71,9 +101,19 @@ def ejecutar():
     evidencia_adls(datos)
     print()
     evidencia_severidad(datos)
+    print()
+    evidencia_posteriores(datos)
 
     print()
     print(tabla_exclusion().to_string(index=False))
+
+    marcadas = columnas_marcadas_por_uci(datos)
+    print()
+    if marcadas:
+        print(f"Columnas con rol 'Other' en la ficha oficial, tampoco son predictoras: {marcadas}")
+        datos = datos.drop(columns=marcadas)
+    else:
+        print("Ninguna columna con rol 'Other' de la ficha viene en el csv.")
 
     columnas_antes = datos.shape[1]
     datos = aplicar_exclusion(datos)

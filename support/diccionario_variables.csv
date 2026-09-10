@@ -1,0 +1,48 @@
+name,role,description
+age,Feature,Age of the patients in years
+death,Target,Death at any time up to National Death Index (NDI) data on 31 of December of 1994. Some patients are discharged before the end of the study and are not followed up. The authors looked up the information about death.
+sex,Feature,"Gender of the patient. Listed values are {male, female}."
+hospdead,Target,Death in hospital
+slos,Other,Days from Study Entry to Discharge
+d.time,Other,Days of follow-up
+dzgroup,Feature,"The patient's disease sub category amogst ARF/MOSF w/Sepsis, CHF, COPD, Cirrhosis, Colon Cancer, Coma, Lung Cancer, MOSF w/Malig."
+dzclass,Feature,"The patient's disease category amongst ""ARF/MOSF"", ""COPD/CHF/Cirrhosis"", ""Cancer"", ""Coma""."
+num.co,Feature,The number of simultaneous diseases (or comorbidities) exhibited by the patient. Values are ordinal with higher values indicating worse condition and chances of survival.
+edu,Feature,Years of education
+income,Feature,"Income of the patient. Listed values are {""$11-$25k"", ""$25-$50k"", "">$50k"", ""under $11k""}."
+scoma,Feature,SUPPORT day 3 Coma Score based on Glasgow scale (predicted by a model).
+charges,Feature,Hospital charges
+totcst,Feature,Total ratio of costs to charges (RCC) cost
+totmcst,Feature,Total micro cost
+avtisst,Feature,"Average TISS score, days 3-25, where Therapeutic Intervention Scoring System (TISS) is a method for calculating costs in the intensive care unit (ICU) and intermediate care unit (IMCU)."
+race,Feature,"Race of the patient. Listed values are {asian, black, hispanic, missing, other, white}."
+sps,Feature,SUPPORT physiology score on day 3 (predicted by a model).
+aps,Feature,"APACHE III day 3 physiology score (no coma, imp bun,uout for ph1)"
+surv2m,Feature,SUPPORT model 2-month survival estimate at day 3  (predicted by a model)
+surv6m,Feature,SUPPORT model 6-month survival estimate at day 3  (predicted by a model)
+hday,Feature,Day in hospital at which patient entered study.
+diabetes,Feature,"Whether the patient exhibits diabetes (Com 27-28, Dx 73) as a comorbidity (Y) or not (N)."
+dementia,Feature,Whether the patient exhibits dementia (Comorbidity 6) as a comorbidity (Y) or not (N).
+ca,Feature,"Whether the patient has cancer (yes), whether it has spread out (metastatic), or if it is healthy (no)."
+prg2m,Feature,Physician’s 2-month survival estimate for patient.
+prg6m,Feature,Physician’s 6-month survival estimate for patient.
+dnr,Feature,"Whether the patient has a do not rescuscitate (DNR) order or not. Possible values are dnr after sadm, dnr before sadm, missing, no dnr."
+dnrday,Feature,Day of DNR order (<0 if before study)
+meanbp,Feature,"mean arterial blood pressure of the patient, measured at day 3."
+wblc,Feature,counts of white blood cells (in thousands) measured at day 3.
+hrt,Feature,heart rate of the patient measured at day 3.
+resp,Feature,respiration rate of the patient measured at day 3.
+temp,Feature,temperature in Celsius degrees measured at day 3.
+pafi,Feature,"$PaO_2/FiO_2$ ratio measured at day 3. The ratio of arterial oxygen partial pressure (PaO2 in mmHg) to fractional inspired oxygen (FiO2 expressed as a fraction). Widely used clinical indicator of hypoxaemia, though its diagnostic utility is controversial. Specific ranges of values can be associated with different levels of mortality. May be worth considering binning these values according to some ranges: https://litfl.com/pao2-fio2-ratio/"
+alb,Feature,serum albumin levels measured at day 3.
+bili,Feature,bilirubin levels measured at day 3.
+crea,Feature,serum creatinine levels measured at day 3.
+sod,Feature,serum sodium concentration measured at day 3.
+ph,Feature,"Arterial blood pH. The pH of blood is usually between 7.35 and 7.45. Abnormal results may be due to lung, kidney, metabolic diseases, or medicines. Head or neck injuries or other injuries that affect breathing can also lead to abnormal results."
+glucose,Feature,Glucose levels measured at day 3.
+bun,Feature,Blood urea nitrogen levels measured at day 3.
+urine,Feature,Urine output measured at day 3.
+adlp,Feature,"Index of Activities of Daily Living (ADL) of the patient, filled out by the patient. Higher values indicate more chance of survival, measured at day 3."
+adls,Feature,"Index of Activities of Daily Living (ADL) of the patient, filled out by a surrogate (e.g. family member), measured at day 3. Higher values indicate more chance of survival."
+sfdm2,Target,"Level of functional disability of the patient in a 1-5 scale, with 5 being the highest severity. The values were obtained via questionairres to the patient and/or surrogates to determine the Sickness Profile Impact (SIP). Values are correlated with ADLS, ADLP columns. Listed values are: {1: ""no(Month 2 and SIP pres)"", ""adl>=4 (>=5 if sur)"", ""SIP>=30"", ""Coma or Intub"", 5: ""<2 mo. follow-up""}. There are 159 patients surviving 2 months for whom there were no patient or surrogate interviews. These patients have missing sfdm2."
+adlsc,Feature,Imputed ADL Calibrated to Surrogate.

@@ -1,5 +1,11 @@
 """Lote 1: obtiene support2.csv desde el repositorio UCI o reutiliza el archivo local."""
 
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import pandas as pd
 
 from modularizado import config
@@ -17,10 +23,15 @@ def descargar_desde_uci():
     return datos, diccionario
 
 
-def guardar_descarga(datos, diccionario):
-    """Escribe el csv crudo y el diccionario de variables."""
+def guardar_datos(datos):
+    """Escribe el csv crudo."""
     config.DIR_DATOS.mkdir(parents=True, exist_ok=True)
     datos.to_csv(config.RUTA_CSV, index=False)
+
+
+def guardar_diccionario(diccionario):
+    """Escribe la ficha de variables que publica UCI."""
+    config.DIR_DATOS.mkdir(parents=True, exist_ok=True)
     diccionario.to_csv(config.RUTA_DICCIONARIO, index=False)
 
 
@@ -53,7 +64,10 @@ def ejecutar():
         print(f"Mismas columnas: {mismas_columnas}")
     else:
         print("No habia un archivo previo; se guarda por primera vez.")
-        guardar_descarga(datos, diccionario)
+        guardar_datos(datos)
+
+    guardar_diccionario(diccionario)
+    print(f"Diccionario de variables guardado en: {config.RUTA_DICCIONARIO}")
 
     return config.RUTA_CSV
 

@@ -1,5 +1,11 @@
 """Lote 8: convierte las columnas de categoria en columnas numericas 0/1."""
 
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import pandas as pd
 
 from modularizado.utilidades import (
@@ -44,10 +50,10 @@ def codificar(entrenamiento, prueba, categoricas):
 
 def ejecutar():
     """Entrega ambos conjuntos completamente numericos y con las mismas columnas."""
-    titulo("Lote 8: codificacion de categorias")
+    titulo("Lote 9: codificacion de categorias")
 
-    entrenamiento = cargar_intermedio("07_entrenamiento")
-    prueba = cargar_intermedio("07_prueba")
+    entrenamiento = cargar_intermedio("08_entrenamiento")
+    prueba = cargar_intermedio("08_prueba")
 
     _, categoricas = columnas_por_tipo(entrenamiento)
     categorias_fijas = fijar_categorias(entrenamiento, categoricas)
@@ -66,8 +72,8 @@ def ejecutar():
     print(f"Columnas despues de codificar: {entrenamiento.shape[1]}")
     print(f"Mismas columnas y mismo orden en ambos conjuntos: {list(entrenamiento.columns) == list(prueba.columns)}")
 
-    guardar_intermedio(entrenamiento, "08_entrenamiento")
-    guardar_intermedio(prueba, "08_prueba")
+    guardar_intermedio(entrenamiento, "09_entrenamiento")
+    guardar_intermedio(prueba, "09_prueba")
     return entrenamiento, prueba
 
 

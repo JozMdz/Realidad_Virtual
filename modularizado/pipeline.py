@@ -1,15 +1,23 @@
 """Ejecuta los lotes del preprocesamiento en orden."""
 
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from modularizado import (
     lote_01_descarga,
     lote_02_auditoria,
     lote_03_seleccion,
     lote_04_duplicados,
     lote_05_particion,
-    lote_06_faltantes,
+    lote_06_nulos,
     lote_07_atipicos,
-    lote_08_codificacion,
-    lote_09_salida,
+    lote_08_imputacion,
+    lote_09_codificacion,
+    lote_10_salida,
+    lote_11_validacion,
 )
 
 LOTES = [
@@ -18,10 +26,12 @@ LOTES = [
     lote_03_seleccion,
     lote_04_duplicados,
     lote_05_particion,
-    lote_06_faltantes,
+    lote_06_nulos,
     lote_07_atipicos,
-    lote_08_codificacion,
-    lote_09_salida,
+    lote_08_imputacion,
+    lote_09_codificacion,
+    lote_10_salida,
+    lote_11_validacion,
 ]
 
 
