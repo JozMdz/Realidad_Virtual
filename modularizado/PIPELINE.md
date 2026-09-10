@@ -251,6 +251,63 @@ Se agregó el lote 11 con las revisiones automáticas listadas arriba.
 
 ---
 
+# Lo que dijo el diccionario oficial
+
+El lote 1 ahora descarga `diccionario_variables.csv`, la ficha que publica UCI. Contrastarla con
+los datos confirmó tres cosas y corrigió una.
+
+## Confirma que el criterio de exclusión ya lo usaba UCI
+
+La ficha trae 47 variables, pero el CSV tiene 45. Las dos que faltan están marcadas con rol
+**"Other"**, o sea que UCI mismo dice que no son predictoras:
+
+- `slos`: días desde el ingreso al estudio hasta el alta.
+- `d.time`: días de seguimiento.
+
+Son fuga pura: la duración de la estancia sale de cuándo terminó, vivo o muerto. Nunca entraron
+porque el notebook armó el dataset con `features.join(targets)` y estas quedan fuera de los dos
+grupos.
+
+Esto respalda lo que se hizo con `dnr`, los costos y `avtisst`: **no es una regla inventada, es
+la misma que el repositorio ya venía aplicando y que dejó incompleta.** El lote 3 ahora lo
+verifica solo: lee la ficha, busca columnas con rol "Other" y las descarta si aparecen.
+
+## Confirma que `avtisst` es un método de costeo
+
+La ficha lo dice textual: TISS es *"a method for calculating costs in the intensive care unit"*.
+No es una variable clínica, es contabilidad de la estancia.
+
+## Obliga a precisar por qué se van `surv2m` y `surv6m`
+
+La ficha describe `surv2m` y `surv6m` como *"predicted by a model"*. El problema es que `scoma` y
+`sps` dicen exactamente lo mismo, y esas se conservan.
+
+El criterio real no es "lo calculó un modelo" sino **qué cosa estima**:
+
+- `surv2m`, `surv6m`, `prg2m`, `prg6m` estiman **el desenlace**. Son la respuesta.
+- `scoma` y `sps` son puntajes de **gravedad al día 3**. Describen al paciente.
+
+El lote 3 ahora imprime esa distinción junto a la ficha, para que quede contestada antes de que
+la pregunten.
+
+## Corrige un error de la propia ficha
+
+El diccionario dice que en `adlp` y `adls` *"higher values indicate more chance of survival"*.
+Los datos dicen lo contrario:
+
+| | `adlsc` promedio |
+|---|---|
+| Sobreviven | 1.74 |
+| Mueren | **2.32** |
+
+La correlación con `hospdead` es **+0.126**. El índice ADL cuenta *dependencias*: más alto es más
+dependiente, o sea peor. La descripción de UCI está invertida.
+
+No cambia nada del código, porque la columna se usa como número igual. Pero si se repite la frase
+de la ficha al explicar la variable, se dice al revés.
+
+---
+
 # Lo que queda abierto
 
 Cosas que no son errores pero conviene tener presentes:
@@ -263,6 +320,10 @@ Cosas que no son errores pero conviene tener presentes:
 - **No hay escalado.** Las columnas quedan en sus unidades originales. La regresión logística y
   las redes lo necesitan; los árboles y el boosting no. Conviene hacerlo dentro del modelo, no
   acá, para que se ajuste solo con entrenamiento.
+- **`pafi` podría ir en rangos.** La propia ficha sugiere agruparla por umbrales clínicos de
+  hipoxemia en vez de usarla continua. No está hecho.
+- **`num_co` es ordinal (0 a 9) y el RIC la acota en 6.** Recorta la punta de la escala. Son 22
+  filas, pero conviene saberlo.
 - **Las clases están desbalanceadas**: 25.9% muere, 74.1% sobrevive. Un modelo que diga siempre
   "sobrevive" acierta el 74.1%, así que la exactitud sola no dice nada. Hay que mirar AUC,
   precisión y recall de la clase minoritaria.

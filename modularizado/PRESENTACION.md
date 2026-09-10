@@ -192,6 +192,55 @@ Si algo falla, corta con error. Hoy pasa todo.
 
 ---
 
+## El diccionario oficial respalda el criterio
+
+La ficha de UCI trae **47** variables. El CSV tiene **45**.
+
+Las dos que faltan están marcadas con rol **"Other"**:
+
+- `slos` — días desde el ingreso al estudio hasta el alta.
+- `d.time` — días de seguimiento.
+
+Fuga pura: la duración de la estancia sale de cuándo terminó.
+
+**UCI ya había aplicado este criterio. Nosotros lo extendimos a las seis que se le escaparon.**
+
+El lote 3 ahora lo verifica solo: lee la ficha y descarta lo marcado "Other".
+
+---
+
+## Una precisión que exige la ficha
+
+La ficha dice que `surv2m` y `surv6m` son *"predicted by a model"*.
+
+Pero `scoma` y `sps` dicen **lo mismo**, y esas se conservan.
+
+El criterio no es "lo calculó un modelo". Es **qué estima**:
+
+| Variable | Qué estima | |
+|---|---|---|
+| `surv2m`, `prg2m`... | El desenlace | se va |
+| `scoma`, `sps` | La gravedad al día 3 | se queda |
+
+---
+
+## Ojo: el diccionario tiene un error
+
+Dice que en `adlp` y `adls` *"higher values indicate more chance of survival"*.
+
+Los datos dicen lo contrario:
+
+| | `adlsc` promedio |
+|---|---|
+| Sobreviven | 1.74 |
+| Mueren | **2.32** |
+
+El índice ADL cuenta **dependencias**: más alto = más dependiente = peor.
+
+No cambia el código. Pero si se repite la frase de la ficha, se dice al revés.
+
+---
+
 ## Resultado
 
 | | Filas | Columnas | Faltantes |
@@ -208,6 +257,55 @@ Todo numérico. `hospdead` como última columna.
 `modelado_base.py` — ya corriendo sobre esta salida.
 
 Validación cruzada de 5 particiones sobre entrenamiento, más evaluación en prueba.
+
+---
+
+## El diccionario oficial respalda el criterio
+
+La ficha de UCI trae **47** variables. El CSV tiene **45**.
+
+Las dos que faltan están marcadas con rol **"Other"**:
+
+- `slos` — días desde el ingreso al estudio hasta el alta.
+- `d.time` — días de seguimiento.
+
+Fuga pura: la duración de la estancia sale de cuándo terminó.
+
+**UCI ya había aplicado este criterio. Nosotros lo extendimos a las seis que se le escaparon.**
+
+El lote 3 ahora lo verifica solo: lee la ficha y descarta lo marcado "Other".
+
+---
+
+## Una precisión que exige la ficha
+
+La ficha dice que `surv2m` y `surv6m` son *"predicted by a model"*.
+
+Pero `scoma` y `sps` dicen **lo mismo**, y esas se conservan.
+
+El criterio no es "lo calculó un modelo". Es **qué estima**:
+
+| Variable | Qué estima | |
+|---|---|---|
+| `surv2m`, `prg2m`... | El desenlace | se va |
+| `scoma`, `sps` | La gravedad al día 3 | se queda |
+
+---
+
+## Ojo: el diccionario tiene un error
+
+Dice que en `adlp` y `adls` *"higher values indicate more chance of survival"*.
+
+Los datos dicen lo contrario:
+
+| | `adlsc` promedio |
+|---|---|
+| Sobreviven | 1.74 |
+| Mueren | **2.32** |
+
+El índice ADL cuenta **dependencias**: más alto = más dependiente = peor.
+
+No cambia el código. Pero si se repite la frase de la ficha, se dice al revés.
 
 ---
 
@@ -245,6 +343,7 @@ Ese intercambio es la decisión que viene:
 - Se siguieron los pasos elementales del preprocesamiento, en orden y sin saltos.
 - Se auditó el resultado y aparecieron dos errores reales, ya corregidos.
 - Se agregó una validación que impide entregar un archivo roto.
+- Se contrastó todo contra el diccionario oficial de UCI.
 - Los modelos base ya corren sobre esa salida.
 
 **Detalle completo:** `PIPELINE.md`

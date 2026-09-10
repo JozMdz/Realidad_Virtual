@@ -25,6 +25,10 @@ def evidencia_estimaciones(datos):
     print()
     print("Correlacion entre ellas (1.0 = identicas):")
     print(datos[columnas].corr().round(2))
+    print()
+    print("Criterio: se excluye lo que estima el desenlace, no lo que describe al paciente.")
+    print("scoma y sps tambien salen de un modelo segun la ficha, pero son puntajes de")
+    print("gravedad al dia 3, asi que se conservan.")
 
 
 def evidencia_dzclass(datos):
@@ -61,6 +65,18 @@ def evidencia_posteriores(datos):
     print((pd.crosstab(datos["dnr"], datos[config.OBJETIVO], normalize="columns") * 100).round(1))
 
 
+def columnas_marcadas_por_uci(datos):
+    """Busca columnas que la ficha oficial marca con rol Other, que no son predictoras."""
+    if not config.RUTA_DICCIONARIO.exists():
+        return []
+    diccionario = pd.read_csv(config.RUTA_DICCIONARIO)
+    nombres = [
+        nombre.strip().lower().replace(" ", "_").replace(".", "_")
+        for nombre in diccionario.loc[diccionario["role"] == "Other", "name"]
+    ]
+    return [nombre for nombre in nombres if nombre in datos.columns]
+
+
 def tabla_exclusion():
     """Devuelve la lista de columnas excluidas con su motivo."""
     motivos = config.motivos_exclusion()
@@ -90,6 +106,14 @@ def ejecutar():
 
     print()
     print(tabla_exclusion().to_string(index=False))
+
+    marcadas = columnas_marcadas_por_uci(datos)
+    print()
+    if marcadas:
+        print(f"Columnas con rol 'Other' en la ficha oficial, tampoco son predictoras: {marcadas}")
+        datos = datos.drop(columns=marcadas)
+    else:
+        print("Ninguna columna con rol 'Other' de la ficha viene en el csv.")
 
     columnas_antes = datos.shape[1]
     datos = aplicar_exclusion(datos)
