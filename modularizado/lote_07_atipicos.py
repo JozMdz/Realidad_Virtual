@@ -1,4 +1,4 @@
-"""Lote 7: acota valores atipicos con el rango intercuartilico del entrenamiento."""
+"""Lote 7: acota valores atipicos con el RIC calculado sobre los datos observados."""
 
 import pandas as pd
 
@@ -19,7 +19,7 @@ def separar_binarias(entrenamiento, numericas):
 
 
 def limites_ric(serie, factor=config.FACTOR_RIC):
-    """Devuelve los limites inferior y superior segun Q1, Q3 y el RIC."""
+    """Devuelve los limites inferior y superior segun Q1, Q3 y el RIC, ignorando nulos."""
     q1 = serie.quantile(0.25)
     q3 = serie.quantile(0.75)
     ric = q3 - q1

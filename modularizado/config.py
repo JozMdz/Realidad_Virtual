@@ -28,7 +28,26 @@ COLUMNAS_EXCLUIDAS = {
     "adls": "redundante: adlsc ya contiene la misma informacion, sin huecos",
 }
 
+COLUMNAS_POSTERIORES = {
+    "dnr": "la orden de no reanimar suele firmarse cuando el paciente ya esta empeorando",
+    "dnrday": "dia de la orden de no reanimar: misma razon que dnr",
+    "charges": "cobro total de la hospitalizacion, se conoce recien al dar de alta",
+    "totcst": "costo total de la hospitalizacion, se conoce recien al dar de alta",
+    "totmcst": "costo total detallado, se conoce recien al dar de alta",
+    "avtisst": "promedio de intervenciones de los dias 3 al 25, cubre toda la estancia",
+}
+
+INCLUIR_POSTERIORES = False
+
 SEMILLA = 42
 FRACCION_ENTRENAMIENTO = 0.8
 LIMITE_FALTANTES = 50.0
 FACTOR_RIC = 1.5
+
+
+def motivos_exclusion():
+    """Devuelve el diccionario de columnas excluidas segun la configuracion vigente."""
+    motivos = dict(COLUMNAS_EXCLUIDAS)
+    if not INCLUIR_POSTERIORES:
+        motivos.update(COLUMNAS_POSTERIORES)
+    return motivos

@@ -45,17 +45,25 @@ def evidencia_severidad(datos):
     print("No son identicas, se conservan ambas.")
 
 
+def evidencia_posteriores(datos):
+    """Muestra que dnr, los costos y avtisst reflejan lo ocurrido durante la estancia."""
+    columnas = [c for c in config.COLUMNAS_POSTERIORES if c != "dnr"]
+    print("Promedio segun si el paciente murio en el hospital:")
+    print(datos.groupby(config.OBJETIVO)[columnas].mean().round(1))
+    print()
+    print("Distribucion de dnr por hospdead (% de cada columna):")
+    print((pd.crosstab(datos["dnr"], datos[config.OBJETIVO], normalize="columns") * 100).round(1))
+
+
 def tabla_exclusion():
     """Devuelve la lista de columnas excluidas con su motivo."""
-    return pd.DataFrame({
-        "columna": list(config.COLUMNAS_EXCLUIDAS.keys()),
-        "motivo": list(config.COLUMNAS_EXCLUIDAS.values()),
-    })
+    motivos = config.motivos_exclusion()
+    return pd.DataFrame({"columna": list(motivos), "motivo": list(motivos.values())})
 
 
 def aplicar_exclusion(datos):
     """Elimina las columnas excluidas del dataset."""
-    return datos.drop(columns=list(config.COLUMNAS_EXCLUIDAS.keys()))
+    return datos.drop(columns=list(config.motivos_exclusion()))
 
 
 def ejecutar():
@@ -71,6 +79,8 @@ def ejecutar():
     evidencia_adls(datos)
     print()
     evidencia_severidad(datos)
+    print()
+    evidencia_posteriores(datos)
 
     print()
     print(tabla_exclusion().to_string(index=False))
