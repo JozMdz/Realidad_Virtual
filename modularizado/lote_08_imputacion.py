@@ -1,5 +1,11 @@
 """Lote 8: rellena los valores faltantes con estadisticos del entrenamiento."""
 
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from modularizado.utilidades import (
     cargar_intermedio,
     columnas_por_tipo,

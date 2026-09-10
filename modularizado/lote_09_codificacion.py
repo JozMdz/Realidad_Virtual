@@ -1,5 +1,11 @@
 """Lote 8: convierte las columnas de categoria en columnas numericas 0/1."""
 
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import pandas as pd
 
 from modularizado.utilidades import (

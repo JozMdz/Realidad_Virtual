@@ -1,5 +1,11 @@
 """Lote 4: elimina filas duplicadas antes de dividir entrenamiento y prueba."""
 
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from modularizado.utilidades import cargar_intermedio, guardar_intermedio, titulo
 
 

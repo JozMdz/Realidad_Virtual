@@ -1,5 +1,11 @@
 """Lote 1: obtiene support2.csv desde el repositorio UCI o reutiliza el archivo local."""
 
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import pandas as pd
 
 from modularizado import config

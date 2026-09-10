@@ -1,5 +1,11 @@
 """Lote 9: ordena las columnas, guarda los csv finales e imprime el resumen."""
 
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from modularizado import config
 from modularizado.utilidades import cargar_intermedio, titulo
 

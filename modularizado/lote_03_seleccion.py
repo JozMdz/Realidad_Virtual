@@ -1,5 +1,11 @@
 """Lote 3: elige el objetivo y quita columnas con fuga de informacion o redundantes."""
 
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import pandas as pd
 
 from modularizado import config

@@ -1,5 +1,11 @@
 """Lote 5: separa entrenamiento y prueba de forma estratificada."""
 
+import sys
+from pathlib import Path
+
+if __package__ in (None, ""):
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 from modularizado import config
 from modularizado.utilidades import cargar_intermedio, guardar_intermedio, titulo
 
