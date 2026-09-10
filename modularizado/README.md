@@ -4,20 +4,24 @@ Version en lotes `.py` del preprocesamiento que en el repositorio esta en `suppo
 Cada lote es un modulo ejecutable por separado: lee el archivo intermedio que dejo el lote
 anterior en `intermedios/` y escribe el suyo.
 
-La narracion completa del pipeline, la auditoria y las correcciones respecto al notebook estan
-en [PIPELINE.md](PIPELINE.md).
+- [PRESENTACION.md](PRESENTACION.md): version breve, para exponer o leer de corrido.
+- [PIPELINE.md](PIPELINE.md): narracion completa, auditoria y correcciones respecto al notebook.
 
 ## Ejecucion
 
 Desde la raiz del repositorio:
 
 ```bash
+pip install -r modularizado/requirements.txt
+
 python -m modularizado.pipeline           # todos los lotes en orden
 python -m modularizado.lote_07_atipicos   # un lote suelto
+python -m modularizado.modelado_base      # modelos base sobre la salida
 ```
 
-Requiere `pandas` (y `ucimlrepo` solo si se quiere volver a descargar el csv desde UCI;
-sin conexion el lote 1 reutiliza `support/support2.csv`).
+El pipeline solo necesita `pandas`. `scikit-learn` es para `modelado_base.py` y `ucimlrepo`
+solo si se quiere volver a descargar el csv desde UCI: sin conexion el lote 1 reutiliza
+`support/support2.csv`.
 
 ## Lotes
 
@@ -34,6 +38,10 @@ sin conexion el lote 1 reutiliza `support/support2.csv`).
 | 9 | `lote_09_codificacion.py` | Convierte categorias en columnas 0/1 |
 | 10 | `lote_10_salida.py` | Ordena columnas y guarda `support2_train.csv` y `support2_test.csv` |
 | 11 | `lote_11_validacion.py` | Comprueba que la salida este lista para modelar |
+
+`modelado_base.py` no es parte del pipeline: entrena los modelos base sobre la salida
+(referencia, logistica, logistica balanceada, arbol, bosque y boosting), los compara con
+validacion cruzada y evalua en prueba.
 
 `config.py` concentra rutas y parametros (objetivo, semilla, limites, columnas excluidas).
 `utilidades.py` maneja los archivos intermedios y la separacion numericas/categoricas.
