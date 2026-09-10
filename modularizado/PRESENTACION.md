@@ -18,7 +18,7 @@ El dataset está publicado en el repositorio de UCI, con el id 880.
 
 ## Los grupos de variables
 
-Las 45 columnas no son todas del mismo tipo. Las agrupamos así para entenderlas mejor.
+Las 45 columnas no son todas del mismo tipo. Las agrupé así para entenderlas mejor.
 
 ### 1. Quién es el paciente
 
@@ -140,13 +140,13 @@ El paciente 1 tiene `scoma` 44 y los puntajes más altos. Es el que murió.
 | `surv2m`, `surv6m` | Probabilidad de sobrevivir 2 y 6 meses, según un modelo del estudio |
 | `prg2m`, `prg6m` | Lo mismo, pero estimado por el médico que lo atendía |
 
-Estos dos últimos grupos van a dar problema más adelante. Lo vemos en el lote 3.
+Estos dos últimos grupos van a dar problema más adelante. Lo explico en el lote 3.
 
 ---
 
 ## Las variables objetivo
 
-El dataset trae **tres** columnas que podrían ser lo que queremos predecir.
+El dataset trae **tres** columnas que podrían ser lo que quiero predecir.
 
 | Columna | Qué significa |
 |---|---|
@@ -154,7 +154,7 @@ El dataset trae **tres** columnas que podrían ser lo que queremos predecir.
 | `hospdead` | Murió durante esa internación |
 | `sfdm2` | Nivel de discapacidad en una entrevista a los 2 meses |
 
-Elegimos **`hospdead`**.
+Elegí **`hospdead`**.
 
 Que sean distintas se ve en los datos. Miren al paciente 2 de la tabla de arriba:
 
@@ -178,9 +178,9 @@ O sea, muere el **25.9%**. Es un problema de clasificación binaria, y las clase
 
 # El pipeline
 
-Lo armamos en once archivos `.py` que se corren en orden. Le decimos lotes.
+Lo armé en once archivos `.py` que se corren en orden. Les digo lotes.
 
-Cada lote guarda su resultado en un archivo y el siguiente lo levanta. Así, si algo falla en el paso 7, arreglamos el 7 y corremos solo el 7. No hay que rehacer todo.
+Cada lote guarda su resultado en un archivo y el siguiente lo levanta. Así, si algo falla en el paso 7, arreglo el 7 y corro solo el 7. No tengo que rehacer todo.
 
 ```
 python -m modularizado.pipeline           # corre todo
@@ -203,7 +203,7 @@ diccionario = support2.variables[["name", "role", "description"]]
 
 El `join` pega las columnas de entrada con las columnas objetivo, porque UCI las entrega separadas.
 
-También bajamos el **diccionario de variables**, que es la ficha oficial donde UCI explica qué es cada columna. Sirve para no adivinar.
+También bajo el **diccionario de variables**, que es la ficha oficial donde UCI explica qué es cada columna. Sirve para no adivinar.
 
 Si no hay internet, el lote usa el archivo que ya está guardado y sigue.
 
@@ -211,7 +211,7 @@ Si no hay internet, el lote usa el archivo que ya está guardado y sigue.
 
 ## Lote 2 — Auditoría estadística
 
-Antes de tocar nada, ver qué tenemos.
+Antes de tocar nada, ver qué tengo.
 
 Primero hay que dejar los datos parejos:
 
@@ -223,10 +223,10 @@ datos.columns = [c.strip().lower().replace(" ", "_").replace(".", "_")
 
 Dos cosas pasan ahí:
 
-- `na_values` le dice a pandas qué cosas tiene que contar como dato faltante. Si no lo ponemos, un `"?"` lo lee como texto válido.
+- `na_values` le dice a pandas qué cosas tiene que contar como dato faltante. Si no lo pongo, un `"?"` lo lee como texto válido.
 - Renombrar las columnas. `num.co` tiene un punto en el medio y eso da problemas después. Queda `num_co`.
 
-Después armamos una tabla con el estado de cada columna. Esto fue lo que nos salió:
+Después armé una tabla con el estado de cada columna. Esto fue lo que me salió:
 
 ```
 columna    tipo     nulos  pct_nulos  unicos
@@ -255,7 +255,7 @@ adlsc, age, ca, death, dementia, diabetes, dzclass, dzgroup, hday,
 hospdead, num_co, sex
 ```
 
-Están las dos variables objetivo, que es lo importante. Si a `hospdead` le faltaran valores tendríamos un problema mucho más grande.
+Están las dos variables objetivo, que es lo importante. Si a `hospdead` le faltaran valores tendría un problema mucho más grande.
 
 **`income` es la única categórica con muchos huecos**, 32.8%. Tiene sentido: es un dato que se pregunta y la gente no siempre contesta.
 
@@ -263,7 +263,7 @@ Están las dos variables objetivo, que es lo importante. Si a `hospdead` le falt
 
 Un solo valor sobre 9,105 filas da 0.01%, y al redondear a un decimal queda 0.0.
 
-Fuimos a ver quiénes eran y son solo dos pacientes, las filas 5393 y 5440. A los dos les faltan 18 columnas de 45. Uno no tiene ningún puntaje de gravedad y el otro no tiene ningún signo vital.
+Fui a ver quiénes eran y son solo dos pacientes, las filas 5393 y 5440. A los dos les faltan 18 columnas de 45. Uno no tiene ningún puntaje de gravedad y el otro no tiene ningún signo vital.
 
 Conviene mirar la columna `nulos` y no solo el porcentaje, porque el porcentaje redondeado esconde los casos chicos.
 
@@ -273,11 +273,11 @@ Sobre cómo se calcula el porcentaje: `datos[columna].isna()` devuelve `True` o 
 
 ## Lote 3 — Sacar las variables que no se pueden usar
 
-Ya que definimos que la variable objetivo es `hospdead`, hay columnas que no podemos usar aunque parezcan datos normales.
+Ya que definí que la variable objetivo es `hospdead`, hay columnas que no puedo usar aunque parezcan datos normales.
 
-El problema se llama **fuga de información**. Es cuando el modelo recibe, escondida en una columna, la respuesta que le estamos pidiendo adivinar. Entrena bárbaro y después en la vida real no sirve, porque ese dato no existe al momento de predecir.
+El problema se llama **fuga de información**. Es cuando el modelo recibe, escondida en una columna, la respuesta que le estoy pidiendo adivinar. Entrena bárbaro y después en la vida real no sirve, porque ese dato no existe al momento de predecir.
 
-Sacamos tres tipos.
+Saqué tres tipos.
 
 ### Las que son la respuesta
 
@@ -287,7 +287,7 @@ Sacamos tres tipos.
 
 Las otras cuatro son estimaciones de supervivencia. Dos las calculó un modelo del estudio y dos las dio el médico. Usarlas sería copiarle la respuesta a alguien más.
 
-Acá hay que tener cuidado con una cosa. La ficha de UCI dice que `surv2m` es *"predicted by a model"*, pero también dice lo mismo de `scoma` y de `sps`, y esas nos las quedamos. La diferencia no es quién las calculó, es **qué calculan**:
+Acá hay que tener cuidado con una cosa. La ficha de UCI dice que `surv2m` es *"predicted by a model"*, pero también dice lo mismo de `scoma` y de `sps`, y esas me las quedé. La diferencia no es quién las calculó, es **qué calculan**:
 
 | Variable | Qué estima | |
 |---|---|---|
@@ -298,7 +298,7 @@ Acá hay que tener cuidado con una cosa. La ficha de UCI dice que `surv2m` es *"
 
 `dzclass` y `adls`.
 
-Cruzamos `dzgroup` contra `dzclass` con `pd.crosstab`, que cuenta cuántas filas hay en cada combinación:
+Crucé `dzgroup` contra `dzclass` con `pd.crosstab`, que cuenta cuántas filas hay en cada combinación:
 
 ```
 dzclass            ARF/MOSF  COPD/CHF/Cirrhosis  Cancer  Coma
@@ -313,13 +313,13 @@ Lung Cancer               0                   0     908     0
 MOSF w/Malig            712                   0       0     0
 ```
 
-Cada fila tiene un solo número y el resto en cero. Eso quiere decir que `dzclass` no agrega nada, es un resumen de `dzgroup`. Nos quedamos con `dzgroup` que tiene más detalle.
+Cada fila tiene un solo número y el resto en cero. Eso quiere decir que `dzclass` no agrega nada, es un resumen de `dzgroup`. Me quedo con `dzgroup` que tiene más detalle.
 
 Con `adls` pasa parecido: `adlsc` es la misma información ya calibrada y sin huecos.
 
 ### Las que se saben recién al final
 
-Estas son las que más nos costó ver.
+Estas son las que más me costó ver.
 
 `dnr`, `dnrday`, `charges`, `totcst`, `totmcst`, `avtisst`.
 
@@ -333,23 +333,23 @@ no dnr              80.8%    18.9%
 
 De los que mueren, casi el 78% tiene una orden firmada después de entrar. No es un dato de ingreso, es una consecuencia de estar empeorando.
 
-**Los costos.** Promedio de `charges`: 48,683 en los que sobreviven, 92,638 en los que mueren. Pero ese número no existe hasta que el paciente se va del hospital. Al momento de querer predecir, no lo tenemos.
+**Los costos.** Promedio de `charges`: 48,683 en los que sobreviven, 92,638 en los que mueren. Pero ese número no existe hasta que el paciente se va del hospital. Al momento de querer predecir, no lo tengo.
 
 **`avtisst`.** La ficha de UCI dice que TISS es *"un método para calcular costos en terapia intensiva"*. O sea que ni siquiera es un dato clínico.
 
-### Un respaldo que encontramos en la ficha
+### Un respaldo que encontré en la ficha
 
 El diccionario de UCI tiene 47 variables pero el CSV tiene 45. Las dos que faltan son `slos` (días hasta el alta) y `d.time` (días de seguimiento), y están marcadas con rol **"Other"**.
 
 Eso significa que UCI mismo dice que no son predictoras, por la misma razón: la duración de la internación depende de cuándo terminó.
 
-Así que el criterio que usamos no es invento nuestro. Es el que el repositorio ya venía usando y que dejó a medias.
+Así que el criterio que usé no es invento mío. Es el que el repositorio ya venía usando y que dejó a medias.
 
 ---
 
 ## Lote 4 — Duplicados
 
-Buscamos filas repetidas enteras.
+Busqué filas repetidas enteras.
 
 ```python
 duplicados = datos.duplicated().sum()
@@ -358,7 +358,7 @@ datos = datos.drop_duplicates().reset_index(drop=True)
 
 Resultado: **0 duplicados**. No había ninguna.
 
-Igual dejamos el paso, y sobre todo lo dejamos **antes** de partir los datos. Si una fila estuviera repetida y quedara una copia en entrenamiento y otra en prueba, estaríamos evaluando el modelo con una fila que ya vio. Eso infla el resultado.
+Igual dejé el paso, y sobre todo lo dejé **antes** de partir los datos. Si una fila estuviera repetida y quedara una copia en entrenamiento y otra en prueba, estaría evaluando el modelo con una fila que ya vio. Eso infla el resultado.
 
 ---
 
@@ -368,9 +368,9 @@ Acá está la parte más importante de todo el pipeline, y la más fácil de hac
 
 De acá en adelante varios pasos necesitan **aprender un número de los datos**: una mediana para rellenar, un límite para recortar, una lista de categorías para codificar.
 
-Si esos números los calculamos con todos los datos, la información de las filas que después vamos a usar para *evaluar* ya se metió adentro del número. Eso también es fuga, pero no viene de una columna: viene del **orden en que hacemos las cosas**.
+Si esos números los calculo con todos los datos, la información de las filas que después voy a usar para *evaluar* ya se metió adentro del número. Eso también es fuga, pero no viene de una columna: viene del **orden en que hago las cosas**.
 
-Por eso partimos primero.
+Por eso parto primero.
 
 ```python
 entrenamiento = datos.groupby("hospdead", group_keys=False).sample(
@@ -405,9 +405,9 @@ Los tres iguales. La estratificación funcionó.
 
 ## Lote 6 — Columnas con demasiados nulos
 
-Medimos el porcentaje de faltantes, pero ahora **solo en entrenamiento**, siguiendo la regla de arriba.
+Medí el porcentaje de faltantes, pero ahora **solo en entrenamiento**, siguiendo la regla de arriba.
 
-Pusimos el corte en 50%. Si a una columna le falta más de la mitad, se va.
+Puse el corte en 50%. Si a una columna le falta más de la mitad, se va.
 
 Se fueron dos:
 
@@ -416,17 +416,17 @@ Se fueron dos:
 | `adlp` | 61.8% | Índice de actividades diarias, contestado por el paciente |
 | `urine` | 53.5% | Cantidad de orina producida en el día 3 |
 
-### Por qué elegimos eso
+### Por qué elegí eso
 
-`adlp` es una encuesta que el paciente tenía que contestar. Muchos estaban en coma o intubados, así que no la contestaron. Y de todas formas tenemos `adlsc`, que mide lo mismo y no tiene huecos.
+`adlp` es una encuesta que el paciente tenía que contestar. Muchos estaban en coma o intubados, así que no la contestaron. Y de todas formas tengo `adlsc`, que mide lo mismo y no tiene huecos.
 
-`urine` es un dato clínico útil, pero rellenar más de la mitad de una columna es inventar más de lo que sabemos.
+`urine` es un dato clínico útil, pero rellenar más de la mitad de una columna es inventar más de lo que sé.
 
 ### Lo que quedó justo en el límite
 
 `glucose` tiene 49.6% de faltantes y `bun` 47.9%. Pasaron el corte por poco.
 
-Es una decisión discutible. Con un corte del 45% se hubieran ido también. Lo dejamos así pero vale saber que casi la mitad de esas dos columnas es un valor que pusimos nosotros.
+Es una decisión discutible. Con un corte del 45% se hubieran ido también. Lo dejé así pero vale saber que casi la mitad de esas dos columnas es un valor que puse yo.
 
 ---
 
@@ -434,9 +434,9 @@ Es una decisión discutible. Con un corte del 45% se hubieran ido también. Lo d
 
 Un valor atípico es un dato que se sale mucho del resto. Puede ser un error de carga, o puede ser un paciente que de verdad estaba muy mal.
 
-### Con qué lo buscamos
+### Con qué los busqué
 
-Usamos el **rango intercuartílico**, que se abrevia RIC. La idea:
+Usé el **rango intercuartílico**, que se abrevia RIC. La idea:
 
 - **Q1** es el valor que deja al 25% de los datos por debajo.
 - **Q3** es el que deja al 75% por debajo.
@@ -454,20 +454,20 @@ limite_superior = q3 + 1.5 * ric
 
 El 1.5 es la convención de siempre, la misma que usa el diagrama de caja.
 
-### Cómo justificamos el recorte
+### Cómo justifico el recorte
 
-No borramos filas. Al valor que se pasa lo dejamos en el límite. A eso se le dice acotar, y en pandas es `.clip()`:
+No borro filas. Al valor que se pasa lo dejo en el límite. A eso se le dice acotar, y en pandas es `.clip()`:
 
 ```python
 entrenamiento[columna] = entrenamiento[columna].clip(lower=limite_inferior,
                                                     upper=limite_superior)
 ```
 
-Preferimos acotar y no borrar porque borrar una fila entera por una sola columna rara es tirar a la basura los otros 40 datos de ese paciente.
+Preferí acotar y no borrar porque borrar una fila entera por una sola columna rara es tirar a la basura los otros 40 datos de ese paciente.
 
 Los límites salen **de entrenamiento** y se aplican a los dos conjuntos.
 
-Esto es lo que nos salió (las que más se recortaron):
+Esto es lo que me salió (las que más se recortaron):
 
 ```
 columna  atipicos_entrenamiento  atipicos_prueba  limite_inferior  limite_superior
@@ -493,15 +493,15 @@ En `sod` y `temp` se recorta de los dos lados, porque hay pacientes con sodio ba
 
 ### Las binarias quedan afuera
 
-`diabetes`, `dementia` y `hospdead` valen 0 o 1. En una columna así no existe el valor extremo, y si le aplicamos la regla podríamos borrar una de las dos categorías entera. Las salteamos.
+`diabetes`, `dementia` y `hospdead` valen 0 o 1. En una columna así no existe el valor extremo, y si le aplico la regla podría borrar una de las dos categorías entera. Las salteo.
 
-### Un error que corregimos
+### Un error que corregí
 
-Esto lo teníamos mal al principio y lo encontramos revisando.
+Esto lo tenía mal al principio y lo encontré revisando.
 
-Estábamos rellenando los huecos **antes** de recortar. El problema: si a una columna le falta la mitad y la rellenamos con la mediana, entonces la mitad de la columna **es** la mediana. Los cuartiles se juntan en el centro, el RIC casi desaparece y los límites salen ridículos.
+Estaba rellenando los huecos **antes** de recortar. El problema: si a una columna le falta la mitad y la relleno con la mediana, entonces la mitad de la columna **es** la mediana. Los cuartiles se juntan en el centro, el RIC casi desaparece y los límites salen ridículos.
 
-| Columna | % nulos | Límites bien | Límites que nos salían |
+| Columna | % nulos | Límites bien | Límites que me salían |
 |---|---|---|---|
 | `glucose` | 49.6% | -26 a 318 | 131 a 139 |
 | `bun` | 47.9% | -28 a 84 | 19 a 27 |
@@ -509,7 +509,7 @@ Estábamos rellenando los huecos **antes** de recortar. El problema: si a una co
 
 Con los límites malos, un paciente con glucosa en 300 quedaba aplastado en 139. Se recortaban 3,509 filas en vez de 216.
 
-Fíjense en `crea`, que casi no tiene huecos: ahí los límites no cambian. Eso es lo que nos confirmó que el problema era el relleno y no otra cosa.
+Fíjense en `crea`, que casi no tiene huecos: ahí los límites no cambian. Eso es lo que me confirmó que el problema era el relleno y no otra cosa.
 
 La solución fue solo cambiar el orden: **recortar primero, rellenar después.**
 
@@ -517,7 +517,7 @@ La solución fue solo cambiar el orden: **recortar primero, rellenar después.**
 
 ## Lote 8 — Imputación
 
-Imputar es rellenar los huecos. Elegimos dos métodos distintos según el tipo de columna.
+Imputar es rellenar los huecos. Elegí dos métodos distintos según el tipo de columna.
 
 ### Numéricas: mediana
 
@@ -527,7 +527,7 @@ entrenamiento[columna] = entrenamiento[columna].fillna(mediana)
 prueba[columna] = prueba[columna].fillna(mediana)
 ```
 
-Usamos mediana y no promedio porque la mediana no se mueve por los valores extremos. Si hay un paciente con glucosa 1092, el promedio se estira, la mediana no.
+Usé mediana y no promedio porque la mediana no se mueve por los valores extremos. Si hay un paciente con glucosa 1092, el promedio se estira, la mediana no.
 
 Los valores que se usaron:
 
@@ -552,13 +552,13 @@ La moda es el valor que más se repite.
 
 ### Lo importante
 
-El número sale de entrenamiento y se usa para los dos conjuntos. No calculamos una mediana nueva para prueba, porque eso sería usar información de prueba.
+El número sale de entrenamiento y se usa para los dos conjuntos. No calculo una mediana nueva para prueba, porque eso sería usar información de prueba.
 
 ### Una limitación
 
-En `income` rellenamos 2,366 filas con `under $11k`. Es mucho. Estamos asumiendo que el que no contestó es de ingreso bajo, y eso no necesariamente es cierto.
+En `income` rellené 2,366 filas con `under $11k`. Es mucho. Estoy asumiendo que el que no contestó es de ingreso bajo, y eso no necesariamente es cierto.
 
-Una opción mejor sería agregar una columna que marque si el dato faltaba, así el modelo puede usar esa ausencia como información. No lo hicimos, pero queda anotado.
+Una opción mejor sería agregar una columna que marque si el dato faltaba, así el modelo puede usar esa ausencia como información. No lo hice, pero queda anotado.
 
 ---
 
@@ -566,7 +566,7 @@ Una opción mejor sería agregar una columna que marque si el dato faltaba, así
 
 Los modelos trabajan con números. `dzgroup` dice `"Lung Cancer"`, así que hay que convertirlo.
 
-### Primero fijamos las categorías
+### Primero fijo las categorías
 
 ```python
 categorias = sorted(entrenamiento[columna].dropna().unique().tolist())
@@ -574,9 +574,9 @@ entrenamiento[columna] = pd.Categorical(entrenamiento[columna], categories=categ
 prueba[columna] = pd.Categorical(prueba[columna], categories=categorias)
 ```
 
-Esto es para que las dos tablas terminen con exactamente las mismas columnas. Si en prueba apareciera una categoría que no está en entrenamiento, el lote avisa. En nuestro caso no pasó.
+Esto es para que las dos tablas terminen con exactamente las mismas columnas. Si en prueba apareciera una categoría que no está en entrenamiento, el lote avisa. En mi caso no pasó.
 
-### Después codificamos
+### Después codifico
 
 ```python
 entrenamiento = pd.get_dummies(entrenamiento, columns=categoricas, drop_first=True)
@@ -614,19 +614,19 @@ Después:
 
 ### Por qué `drop_first=True`
 
-Descarta la primera categoría de cada variable. No perdemos información: si un paciente tiene 0 en todas las columnas de `dzgroup`, ya sabemos que es de la que sacamos.
+Descarta la primera categoría de cada variable. No se pierde información: si un paciente tiene 0 en todas las columnas de `dzgroup`, ya sé que es de la que saqué.
 
 Dejarla sería repetir un dato, y a algunos modelos eso les molesta.
 
 Al final `reindex` acomoda prueba para que tenga las mismas columnas en el mismo orden que entrenamiento.
 
-De 29 columnas pasamos a 41.
+De 29 columnas paso a 41.
 
 ---
 
 ## Lote 10 — Guardar el resultado
 
-Ponemos `hospdead` al final, que es la convención, y guardamos.
+Pongo `hospdead` al final, que es la convención, y guardo.
 
 ```python
 orden = [c for c in datos.columns if c != "hospdead"] + ["hospdead"]
@@ -654,7 +654,7 @@ race_white, ca_no, ca_yes, hospdead
 
 Este lote no transforma nada. Vuelve a abrir los dos archivos ya guardados y revisa que estén bien.
 
-Lo agregamos porque nos dimos cuenta de que nada comprobaba el resultado. El pipeline terminaba imprimiendo un resumen y listo.
+Lo agregué porque me di cuenta de que nada comprobaba el resultado. El pipeline terminaba imprimiendo un resumen y listo.
 
 Qué revisa:
 
@@ -672,9 +672,9 @@ Si algo falla corta con error. Hoy pasa todo.
 
 # Modelos base
 
-Con los archivos listos, entrenamos algunos modelos para ver de dónde partimos.
+Con los archivos listos, entrené algunos modelos para ver de dónde parto.
 
-Usamos validación cruzada de 5 particiones sobre entrenamiento, y después medimos en prueba.
+Usé validación cruzada de 5 particiones sobre entrenamiento, y después medí en prueba.
 
 El escalado va adentro del pipeline de sklearn, no antes:
 
@@ -682,7 +682,7 @@ El escalado va adentro del pipeline de sklearn, no antes:
 Pipeline([("escalado", StandardScaler()), ("modelo", LogisticRegression())])
 ```
 
-Es la misma idea del lote 5. Si escalamos antes, el escalador aprende de todos los datos.
+Es la misma idea del lote 5. Si escalo antes, el escalador aprende de todos los datos.
 
 ## Resultados
 
@@ -697,7 +697,7 @@ Es la misma idea del lote 5. Si escalamos antes, el escalador aprende de todos l
 
 La fila de abajo es un modelo tonto que contesta siempre "sobrevive". Acierta el **74.1%**.
 
-Lo pusimos a propósito, porque muestra que la exactitud sola no sirve para nada acá. Un modelo que no hace nada ya llega a 74%.
+Lo puse a propósito, porque muestra que la exactitud sola no sirve para nada acá. Un modelo que no hace nada ya llega a 74%.
 
 ## El problema que sigue
 
@@ -711,13 +711,13 @@ Ese intercambio es la decisión que viene: ¿qué es peor, avisar de más o deja
 
 # Cierre
 
-Lo que hicimos:
+Lo que hice:
 
-- Los pasos de siempre del preprocesamiento, en orden y sin saltearnos ninguno.
-- Revisamos el resultado y encontramos dos errores propios, que corregimos: el orden del recorte de atípicos y seis columnas que le pasaban la respuesta al modelo.
-- Agregamos una validación para que no se nos escape un archivo roto.
-- Contrastamos todo contra el diccionario oficial de UCI.
-- Dejamos los modelos base corriendo.
+- Los pasos de siempre del preprocesamiento, en orden y sin saltearme ninguno.
+- Revisé el resultado y encontré dos errores míos, que corregí: el orden del recorte de atípicos y seis columnas que le pasaban la respuesta al modelo.
+- Agregué una validación para que no se me escape un archivo roto.
+- Contrasté todo contra el diccionario oficial de UCI.
+- Dejé los modelos base corriendo.
 
 Un dato para cerrar. Antes de sacar las seis columnas con fuga, el modelo daba **AUC 0.948**. Después dio **0.879**.
 
