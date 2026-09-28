@@ -17,6 +17,7 @@ pip install -r modularizado/requirements.txt
 python -m modularizado.pipeline           # todos los lotes en orden
 python -m modularizado.lote_07_atipicos   # un lote suelto
 python -m modularizado.modelado_base      # modelos base sobre la salida
+python -m modularizado.prueba_pca         # prueba de reduccion de variables
 ```
 
 El pipeline solo necesita `pandas`. `scikit-learn` es para `modelado_base.py` y `ucimlrepo`
@@ -33,11 +34,14 @@ solo si se quiere volver a descargar el csv desde UCI: sin conexion el lote 1 re
 | 4 | `lote_04_duplicados.py` | Elimina filas repetidas |
 | 5 | `lote_05_particion.py` | Divide 80/20 estratificado por `hospdead` |
 | 6 | `lote_06_nulos.py` | Descarta columnas con mas de 50% de nulos |
-| 7 | `lote_07_atipicos.py` | Acota atipicos con el RIC del entrenamiento |
+| 7 | `lote_07_atipicos.py` | Acota atipicos con el RIC del entrenamiento y agrega una bandera por columna acotada |
 | 8 | `lote_08_imputacion.py` | Rellena con mediana y moda del entrenamiento |
 | 9 | `lote_09_codificacion.py` | Convierte categorias en columnas 0/1 |
 | 10 | `lote_10_salida.py` | Ordena columnas y guarda `support2_train.csv` y `support2_test.csv` |
 | 11 | `lote_11_validacion.py` | Comprueba que la salida este lista para modelar |
+
+`prueba_pca.py` tampoco es parte del pipeline: mide si se pueden reducir las variables,
+comparando PCA contra seleccion directa de las k mejores.
 
 `modelado_base.py` no es parte del pipeline: entrena los modelos base sobre la salida
 (referencia, logistica, logistica balanceada, arbol, bosque y boosting), los compara con
@@ -52,8 +56,14 @@ categorias) sale unicamente del conjunto de entrenamiento y se aplica igual al d
 
 ## Salida
 
-`support/support2_train.csv` (7284 x 41) y `support/support2_test.csv` (1821 x 41): todo
+`support/support2_train.csv` (7284 x 61) y `support/support2_test.csv` (1821 x 61): todo
 numerico, sin faltantes, con `hospdead` como ultima columna.
+
+De esas 61, veinte son banderas `<columna>_acotado`: valen 1 en las filas cuyo valor cayo
+fuera de los limites del RIC y fue recortado, asi que el modelo puede distinguir un valor
+medido de uno acotado. Se crea una bandera por cada columna que efectivamente corto algo.
+`MINIMO_BANDERA_ATIPICOS` en `config.py` sube el piso: con `0.01` solo llevan bandera las
+columnas que cortan al menos el 1% de las filas de entrenamiento.
 
 Para volver a incluir las columnas posteriores al ingreso (`dnr`, `dnrday`, `charges`, `totcst`,
 `totmcst`, `avtisst`) y comparar, poner `INCLUIR_POSTERIORES = True` en `config.py`.

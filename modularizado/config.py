@@ -44,6 +44,9 @@ FRACCION_ENTRENAMIENTO = 0.8
 LIMITE_FALTANTES = 50.0
 FACTOR_RIC = 1.5
 
+SUFIJO_BANDERA = "_acotado"
+MINIMO_BANDERA_ATIPICOS = 0.0
+
 
 def motivos_exclusion():
     """Devuelve el diccionario de columnas excluidas segun la configuracion vigente."""

@@ -1,4 +1,4 @@
-"""Lote 7: acota valores atipicos con el RIC calculado sobre los datos observados."""
+"""Lote 7: acota valores atipicos con el RIC y marca con una bandera las filas recortadas."""
 
 import sys
 from pathlib import Path
@@ -32,27 +32,67 @@ def limites_ric(serie, factor=config.FACTOR_RIC):
     return q1 - factor * ric, q3 + factor * ric
 
 
-def acotar(entrenamiento, prueba, columnas):
-    """Recorta los valores fuera de rango en ambos conjuntos y resume lo acotado."""
+def bandera_atipicos(serie, inferior, superior):
+    """Marca con 1 las filas cuyo valor cae fuera de los limites, antes de recortarlo."""
+    return ((serie < inferior) | (serie > superior)).astype(int)
+
+
+def acotar(entrenamiento, prueba, columnas, minimo=config.MINIMO_BANDERA_ATIPICOS):
+    """Recorta los valores fuera de rango y agrega una bandera por columna que si corto."""
     resumen = []
+    banderas_entrenamiento = {}
+    banderas_prueba = {}
+    piso = max(1, round(minimo * len(entrenamiento)))
 
     for columna in columnas:
         inferior, superior = limites_ric(entrenamiento[columna])
-        fuera_train = ((entrenamiento[columna] < inferior) | (entrenamiento[columna] > superior)).sum()
-        fuera_test = ((prueba[columna] < inferior) | (prueba[columna] > superior)).sum()
+        marca_entrenamiento = bandera_atipicos(entrenamiento[columna], inferior, superior)
+        marca_prueba = bandera_atipicos(prueba[columna], inferior, superior)
+        fuera_train = int(marca_entrenamiento.sum())
+        fuera_test = int(marca_prueba.sum())
+
+        lleva_bandera = fuera_train >= piso
+        if lleva_bandera:
+            nombre = f"{columna}{config.SUFIJO_BANDERA}"
+            banderas_entrenamiento[nombre] = marca_entrenamiento
+            banderas_prueba[nombre] = marca_prueba
 
         if fuera_train or fuera_test:
-            resumen.append((columna, fuera_train, fuera_test, round(inferior, 2), round(superior, 2)))
+            resumen.append((
+                columna,
+                fuera_train,
+                fuera_test,
+                round(fuera_train / len(entrenamiento) * 100, 1),
+                round(inferior, 2),
+                round(superior, 2),
+                "si" if lleva_bandera else "no",
+            ))
 
         entrenamiento[columna] = entrenamiento[columna].clip(lower=inferior, upper=superior)
         prueba[columna] = prueba[columna].clip(lower=inferior, upper=superior)
 
+    if banderas_entrenamiento:
+        entrenamiento = pd.concat(
+            [entrenamiento, pd.DataFrame(banderas_entrenamiento, index=entrenamiento.index)], axis=1
+        )
+        prueba = pd.concat(
+            [prueba, pd.DataFrame(banderas_prueba, index=prueba.index)], axis=1
+        )
+
     tabla = pd.DataFrame(
         resumen,
-        columns=["columna", "atipicos_entrenamiento", "atipicos_prueba", "limite_inferior", "limite_superior"],
+        columns=[
+            "columna",
+            "atipicos_entrenamiento",
+            "atipicos_prueba",
+            "porcentaje_train",
+            "limite_inferior",
+            "limite_superior",
+            "bandera",
+        ],
     ).sort_values("atipicos_entrenamiento", ascending=False)
 
-    return entrenamiento, prueba, tabla
+    return entrenamiento, prueba, tabla, list(banderas_entrenamiento)
 
 
 def ejecutar():
@@ -66,9 +106,12 @@ def ejecutar():
     binarias, revisables = separar_binarias(entrenamiento, numericas)
     print(f"Columnas binarias excluidas de la regla: {binarias}")
 
-    entrenamiento, prueba, tabla = acotar(entrenamiento, prueba, revisables)
+    entrenamiento, prueba, tabla, banderas = acotar(entrenamiento, prueba, revisables)
     print("\nColumnas con valores atipicos acotados (limites fijados con entrenamiento):")
     print(tabla.to_string(index=False))
+
+    print(f"\nBanderas agregadas ({len(banderas)}): {banderas}")
+    print(f"Columnas totales: {entrenamiento.shape[1]}")
 
     guardar_intermedio(entrenamiento, "07_entrenamiento")
     guardar_intermedio(prueba, "07_prueba")
