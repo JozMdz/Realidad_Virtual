@@ -722,3 +722,118 @@ Lo que hice:
 Un dato para cerrar. Antes de sacar las seis columnas con fuga, el modelo daba **AUC 0.948**. Después dio **0.879**.
 
 Parece que empeoró, pero es al revés: los modelos publicados sobre este mismo dataset andan entre 0.80 y 0.86. El 0.95 era demasiado bueno para ser verdad. No estaba prediciendo la muerte, la estaba leyendo.
+
+---
+
+# Anexo — Dos pruebas rápidas
+
+Antes de meterme de lleno en el modelado probé dos cosas más. Ninguna cambió la decisión, pero las dejo acá porque la respuesta sirve.
+
+**Aviso:** las secciones de arriba hablan de 41 columnas. Después de la primera prueba son 61.
+
+---
+
+## Prueba 1 — Banderas de recorte
+
+### De dónde salió la idea
+
+En el lote 7 recorto los valores atípicos. El problema es que al recortarlos pierdo el dato de que ese valor *era* extremo.
+
+Un paciente con creatinina 21.5 y otro con 3.4 terminan los dos en 3.4. Para el modelo son iguales, y no lo eran.
+
+### Qué hice
+
+Agregué una bandera por cada columna que efectivamente cortó algo. Se llama `<columna>_acotado` y vale 1 en las filas donde el valor se salió de los límites.
+
+La bandera se calcula **antes** de recortar, que es el único momento en que la información existe.
+
+Cortaron 20 columnas, así que quedaron 20 banderas: el archivo pasó de **41 a 61 columnas**.
+
+### El resultado
+
+| | AUC logística | AUC boosting |
+|---|---|---|
+| Sin banderas (41 columnas) | 0.8791 | 0.8661 |
+| Con banderas (61 columnas) | 0.8783 | 0.8684 |
+
+**No aportan nada.** La diferencia está dentro del ruido: la logística baja un poco, el boosting sube un poco.
+
+### Por qué no aportan
+
+Porque la señal ya estaba ahí. El valor recortado sigue siendo el más alto de la columna, así que el modelo ya podía distinguir "este paciente tiene creatinina alta". La bandera le repite lo mismo.
+
+Igual hay cuatro que tienen señal propia, por su correlación con `hospdead`:
+
+```
+scoma_acotado   0.344
+sps_acotado     0.248
+hday_acotado    0.243
+aps_acotado     0.202
+```
+
+Son justo las que más cortan: `scoma` recorta el 21.8% de las filas y `hday` el 16.8%. Cuando el recorte afecta a una de cada cinco filas, la bandera ya dice algo.
+
+Y hay seis que son casi inútiles: `meanbp_acotado` marca 5 filas de 7,284, `alb_acotado` 10, `temp_acotado` 12.
+
+---
+
+## Prueba 2 — ¿Se pueden reducir las variables con PCA?
+
+### La pregunta
+
+61 columnas es bastante. La idea era ver si con PCA podía bajar a unas pocas componentes sin perder rendimiento.
+
+### El resultado
+
+```
+PC1 explica   7.6% de la varianza
+PC2 explica   4.4%
+PC3 explica   4.3%
+
+Para llegar al 80% → 34 de 60 componentes
+Para llegar al 90% → 42 de 60
+```
+
+Pasar de 60 a 34 no es reducir nada. **PCA no comprime este dataset.**
+
+### Por qué no funciona
+
+PCA sirve cuando las variables están correlacionadas entre sí, porque entonces puede resumir varias en una.
+
+Acá no lo están. Las mediciones clínicas son bastante independientes: la creatinina no me dice nada del sodio, y el sodio nada de la temperatura. Cada una aporta su propio pedazo.
+
+Y encima las 12 dummies y las 20 banderas son casi ortogonales por construcción, así que suman dimensiones que PCA no puede juntar.
+
+Probé también sobre las 41 originales, sin banderas: 24 de 40 componentes para el 80%. Igual de malo.
+
+### Lo que sí funcionaría
+
+De paso comparé contra seleccionar directamente las k mejores variables:
+
+| Variables | PCA | Mejores k |
+|---|---|---|
+| 60 (todas) | 0.8783 | 0.8783 |
+| 40 | 0.8734 | **0.8796** |
+| 20 | 0.8672 | 0.8724 |
+| 10 | 0.8630 | 0.8705 |
+| 5 | 0.8594 | 0.8641 |
+
+La selección directa le gana a PCA en todos los tamaños. Con 40 variables elegidas da 0.8796, apenas mejor que usando las 60.
+
+Ahí sí hay reducción posible. Y con una ventaja: las variables siguen siendo interpretables. Puedo decir "usé `aps`, `sps` y `scoma`", no "usé PC1 y PC7".
+
+---
+
+## Por qué me quedo como estoy
+
+Con las 61 columnas, sin reducir.
+
+**Las banderas se quedan** aunque no muevan el AUC. No cuestan nada, no rompen nada (la validación del lote 11 pasa igual), y documentan cuáles valores tuve que recortar. Si más adelante quiero revisar el efecto del recorte, la información está.
+
+Si en algún momento molestan, `MINIMO_BANDERA_ATIPICOS` en `config.py` sube el piso: con `0.01` solo quedan las 14 que cortan al menos el 1% de las filas.
+
+**No aplico PCA** porque no reduce. Cambiar 60 variables interpretables por 34 componentes que no significan nada es perder y no ganar.
+
+**No reduzco variables todavía** porque con 60 el modelo ya corre rápido y no hay problema de sobreajuste evidente. Reducir es una optimización, y todavía no tengo el problema que la justifique: lo que me falta no son menos variables, es más recall.
+
+Las pruebas quedan en `prueba_pca.py`, así que se pueden volver a correr cuando cambie algo.

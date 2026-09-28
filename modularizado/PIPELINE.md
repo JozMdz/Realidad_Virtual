@@ -344,3 +344,81 @@ Sobre la clase que interesa (los que mueren), el boosting da precisión 0.718 y 
 cada 10 pacientes que marca como que van a morir acierta en 7, pero se le escapan casi la mitad de
 los que efectivamente mueren. Ese recall bajo es el problema a atacar en el modelado, y tiene que
 ver con el desbalance.
+
+
+# Anexo: dos pruebas rápidas
+
+Se probaron dos cosas antes de avanzar con el modelado. Ninguna cambió la decisión.
+
+Nota: el cuerpo de este documento habla de 41 columnas. Después de la primera prueba son 61.
+
+## Prueba 1: banderas de recorte por atípicos
+
+Al acotar un valor atípico se pierde el dato de que era extremo: un paciente con creatinina 21.5
+y otro con 3.4 terminan los dos en 3.4.
+
+Se agregó en el lote 7 una bandera `<columna>_acotado` por cada columna que efectivamente cortó
+algo, calculada **antes** de recortar. Cortaron 20 columnas, así que la salida pasó de 41 a 61.
+
+| | AUC logística | AUC boosting |
+|---|---|---|
+| Sin banderas (41 columnas) | 0.8791 | 0.8661 |
+| Con banderas (61 columnas) | 0.8783 | 0.8684 |
+
+No aportan: la diferencia está dentro del ruido. La razón es que el valor recortado sigue siendo
+el más alto de la columna, así que la señal ya estaba en la variable original.
+
+Cuatro tienen señal propia, y son justo las que más cortan (`scoma` recorta el 21.8% de las filas,
+`hday` el 16.8%):
+
+| Bandera | Correlación con `hospdead` |
+|---|---|
+| `scoma_acotado` | 0.344 |
+| `sps_acotado` | 0.248 |
+| `hday_acotado` | 0.243 |
+| `aps_acotado` | 0.202 |
+
+Seis son casi constantes: `meanbp_acotado` marca 5 filas de 7,284, `alb_acotado` 10,
+`temp_acotado` 12.
+
+## Prueba 2: reducción de variables con PCA
+
+Medida en `prueba_pca.py`, con el escalado y el PCA ajustados solo sobre entrenamiento.
+
+```
+PC1 explica 7.6% de la varianza
+Para el 80% de varianza: 34 de 60 componentes
+Para el 90% de varianza: 42 de 60 componentes
+```
+
+PCA no comprime este dataset. Sirve cuando las variables están correlacionadas entre sí, y acá
+son bastante independientes: la creatinina no informa sobre el sodio. Además las 12 dummies y las
+20 banderas son casi ortogonales por construcción.
+
+Sobre las 41 columnas sin banderas el resultado es igual de malo: 24 de 40 componentes para el 80%.
+
+Comparado contra seleccionar directamente las k mejores variables (`SelectKBest`):
+
+| Variables | PCA | Mejores k |
+|---|---|---|
+| 60 (todas) | 0.8783 | 0.8783 |
+| 40 | 0.8734 | 0.8796 |
+| 20 | 0.8672 | 0.8724 |
+| 10 | 0.8630 | 0.8705 |
+| 5 | 0.8594 | 0.8641 |
+
+La selección directa le gana a PCA en todos los tamaños, y deja las variables interpretables.
+
+Reserva metodológica: PCA mezcla columnas continuas con columnas 0/1, donde la varianza no
+significa lo mismo. No invalida la conclusión, que es amplia, pero conviene declararlo.
+
+## Por qué se mantiene el estado actual
+
+- **Las banderas se conservan** aunque no muevan el AUC: no tienen costo, la validación del lote
+  11 pasa igual, y dejan registrado qué valores fueron recortados. `MINIMO_BANDERA_ATIPICOS` en
+  `config.py` sube el piso si molestan (con `0.01` quedan las 14 que cortan al menos el 1%).
+- **No se aplica PCA**: cambiar 60 variables interpretables por 34 componentes sin significado es
+  perder sin ganar.
+- **No se reduce el número de variables todavía**: con 60 el modelo corre rápido y no hay
+  sobreajuste evidente. Reducir es una optimización, y el problema pendiente no es el número de
+  variables sino el recall de la clase minoritaria.
