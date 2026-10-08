@@ -1,4 +1,4 @@
-"""Modelos base sobre la salida del pipeline: punto de partida del modelado."""
+"""Modelos base sobre la salida del pipeline: tres clasificadores sencillos, comparados."""
 
 import sys
 from pathlib import Path
@@ -8,10 +8,8 @@ if __package__ in (None, ""):
 
 import pandas as pd
 from sklearn.dummy import DummyClassifier
-from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
-    classification_report,
     confusion_matrix,
     f1_score,
     precision_score,
@@ -19,12 +17,17 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
 from modularizado import config
 from modularizado.utilidades import titulo
+
+PROFUNDIDAD_ARBOL = 5
+VECINOS = 25
+PARTICIONES = 5
 
 
 def cargar():
@@ -40,25 +43,33 @@ def cargar():
 
 
 def escalado(modelo):
-    """Envuelve un modelo que necesita variables en la misma escala."""
+    """Envuelve un modelo que compara magnitudes y necesita todo en la misma escala."""
     return Pipeline([("escalado", StandardScaler()), ("modelo", modelo)])
 
 
 def definir_modelos():
-    """Devuelve los modelos base a comparar."""
+    """Devuelve los tres clasificadores a comparar, mas una referencia tonta."""
     return {
         "referencia": DummyClassifier(strategy="prior"),
         "logistica": escalado(LogisticRegression(max_iter=3000, random_state=config.SEMILLA)),
-        "logistica balanceada": escalado(
-            LogisticRegression(max_iter=3000, class_weight="balanced", random_state=config.SEMILLA)
+        "arbol": DecisionTreeClassifier(
+            max_depth=PROFUNDIDAD_ARBOL, random_state=config.SEMILLA
         ),
-        "arbol": DecisionTreeClassifier(max_depth=5, random_state=config.SEMILLA),
-        "bosque": RandomForestClassifier(n_estimators=300, random_state=config.SEMILLA),
-        "boosting": HistGradientBoostingClassifier(random_state=config.SEMILLA),
+        "vecinos": escalado(KNeighborsClassifier(n_neighbors=VECINOS)),
     }
 
 
-def validacion_cruzada(modelos, X, y, particiones=5):
+def describir_modelos():
+    """Explica de que familia es cada clasificador y si necesita escalado."""
+    return pd.DataFrame([
+        ("referencia", "contesta siempre la clase mayoritaria", "no", "-"),
+        ("logistica", "frontera lineal entre las dos clases", "si", "max_iter=3000"),
+        ("arbol", "reglas de corte sobre una variable a la vez", "no", f"max_depth={PROFUNDIDAD_ARBOL}"),
+        ("vecinos", "vota entre los pacientes mas parecidos", "si", f"n_neighbors={VECINOS}"),
+    ], columns=["modelo", "como decide", "necesita escalado", "ajuste"])
+
+
+def validacion_cruzada(modelos, X, y, particiones=PARTICIONES):
     """Compara los modelos por AUC con validacion cruzada sobre entrenamiento."""
     kfold = StratifiedKFold(n_splits=particiones, shuffle=True, random_state=config.SEMILLA)
     filas = []
@@ -92,23 +103,18 @@ def comparar(modelos, X, y, X_prueba, y_prueba):
     return pd.DataFrame(filas).sort_values("auc", ascending=False)
 
 
-def detalle(modelo, X_prueba, y_prueba, nombre):
-    """Imprime matriz de confusion y reporte por clase de un modelo ya entrenado."""
-    prediccion = modelo.predict(X_prueba)
-    matriz = pd.DataFrame(
-        confusion_matrix(y_prueba, prediccion),
+def matriz(modelo, X_prueba, y_prueba):
+    """Devuelve la matriz de confusion de un modelo ya entrenado."""
+    return pd.DataFrame(
+        confusion_matrix(y_prueba, modelo.predict(X_prueba)),
         index=["real: sobrevive", "real: muere"],
         columns=["predijo: sobrevive", "predijo: muere"],
     )
-    print(f"Matriz de confusion de '{nombre}':")
-    print(matriz.to_string())
-    print()
-    print(classification_report(y_prueba, prediccion, target_names=["sobrevive", "muere"], digits=3))
 
 
 def ejecutar():
-    """Entrena los modelos base y compara sus resultados."""
-    titulo("Modelos base")
+    """Entrena los tres clasificadores sencillos y compara sus resultados."""
+    titulo("Modelos base: tres clasificadores")
 
     X, y, X_prueba, y_prueba = cargar()
     print(f"Entrenamiento: {X.shape[0]} filas x {X.shape[1]} variables")
@@ -117,17 +123,25 @@ def ejecutar():
 
     modelos = definir_modelos()
 
-    print("\nValidacion cruzada sobre entrenamiento (AUC, 5 particiones):")
+    print("\nQue hace cada uno:")
+    print(describir_modelos().to_string(index=False))
+
+    print(f"\nValidacion cruzada sobre entrenamiento (AUC, {PARTICIONES} particiones):")
     print(validacion_cruzada(modelos, X, y).to_string(index=False))
 
     resultados = comparar(modelos, X, y, X_prueba, y_prueba)
     print("\nResultados sobre prueba:")
     print(resultados.to_string(index=False))
 
-    mejor = resultados.iloc[0]["modelo"]
-    print()
-    detalle(modelos[mejor], X_prueba, y_prueba, mejor)
+    print("\nMatriz de confusion de cada clasificador:")
+    for nombre in modelos:
+        if nombre == "referencia":
+            continue
+        print(f"\n{nombre}:")
+        print(matriz(modelos[nombre], X_prueba, y_prueba).to_string())
 
+    print("\nLa referencia contesta siempre 'sobrevive' y ya acierta el "
+          f"{(1 - y_prueba.mean()) * 100:.1f}%: la exactitud sola no distingue modelos.")
     print("Siguiente paso: ajustar el umbral de decision y probar pesos de clase")
     print("para subir el recall de 'muere', que es la clase que interesa detectar.")
     return resultados

@@ -39,9 +39,12 @@ solo si se quiere volver a descargar el csv desde UCI: sin conexion el lote 1 re
 | 10 | `lote_10_salida.py` | Ordena columnas y guarda `support2_train.csv` y `support2_test.csv` |
 | 11 | `lote_11_validacion.py` | Comprueba que la salida este lista para modelar |
 
-`modelado_base.py` no es parte del pipeline: entrena los modelos base sobre la salida
-(referencia, logistica, logistica balanceada, arbol, bosque y boosting), los compara con
-validacion cruzada y evalua en prueba.
+`modelado_base.py` no es parte del pipeline: entrena tres clasificadores sencillos sobre la
+salida y los compara. Cada uno decide de una forma distinta, a proposito: `logistica` traza una
+frontera lineal, `arbol` aplica reglas de corte y `vecinos` vota entre los pacientes mas
+parecidos. Los dos que comparan magnitudes llevan `StandardScaler` dentro del pipeline; el arbol
+no lo necesita porque parte por umbrales. Suma una referencia tonta que contesta siempre la clase
+mayoritaria, para tener contra que medir. Compara con validacion cruzada y evalua en prueba.
 
 `config.py` concentra rutas y parametros (objetivo, semilla, limites, columnas excluidas).
 `utilidades.py` maneja los archivos intermedios y la separacion numericas/categoricas.
