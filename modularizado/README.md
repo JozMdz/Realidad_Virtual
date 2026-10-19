@@ -16,8 +16,9 @@ pip install -r modularizado/requirements.txt
 
 python -m modularizado.pipeline           # todos los lotes en orden
 python -m modularizado.lote_07_atipicos   # un lote suelto
-python -m modularizado.modelado_base      # modelos base sobre la salida
-python -m modularizado.prueba_pca         # prueba de reduccion de variables
+python -m modularizado.modelado_base        # modelos base, version modular
+python -m modularizado.modelado_secuencial  # los mismos modelos, de corrido
+python -m modularizado.prueba_pca           # prueba de reduccion de variables
 ```
 
 El pipeline solo necesita `pandas`. `scikit-learn` es para `modelado_base.py` y `ucimlrepo`
@@ -70,3 +71,40 @@ columnas que cortan al menos el 1% de las filas de entrenamiento.
 
 Para volver a incluir las columnas posteriores al ingreso (`dnr`, `dnrday`, `charges`, `totcst`,
 `totmcst`, `avtisst`) y comparar, poner `INCLUIR_POSTERIORES = True` en `config.py`.
+
+## Modelado: dos versiones del mismo trabajo
+
+Las dos entrenan los mismos tres clasificadores sobre la misma salida y dan los mismos numeros.
+Cambia solo la forma de leerlas.
+
+| | `modelado_base.py` | `modelado_secuencial.py` |
+|---|---|---|
+| Estructura | funciones reutilizables | un flujo de arriba a abajo |
+| Pasos | `definir_modelos`, `evaluar`, `comparar` | siete bloques numerados |
+| Referencia tonta | si, `DummyClassifier` | solo la tasa de la clase mayoritaria |
+| Rutas y parametros | los toma de `config.py` | los declara arriba del archivo |
+| Para que sirve | correrlo y extenderlo | leerlo o explicarlo de corrido |
+
+`modelado_secuencial.py` recorre siete pasos:
+
+1. **Particion 80/20**: carga los dos csv que dejo el lote 10 e informa la proporcion de
+   `hospdead=1` en cada uno, que da 0.259 en los dos porque la particion fue estratificada.
+   No vuelve a partir: las medianas y los limites del RIC se calcularon con ese 80%, asi que una
+   particion nueva mandaria a prueba filas que ya influyeron en esos numeros.
+2. **Entradas y objetivo**: separa las 60 variables de `hospdead`.
+3. **Escalado**: `StandardScaler` ajustado con `fit_transform` sobre entrenamiento y aplicado con
+   `transform` a prueba. Va explicito, no dentro de un pipeline, para que se vea de un vistazo
+   que el escalador solo aprende del 80%.
+4. **Regresion logistica**: sobre los datos escalados.
+5. **Arbol de decision**: sobre los datos **sin** escalar. Estandarizar no cambia el orden de los
+   valores, y el arbol solo compara umbrales, asi que elige el mismo corte y da el mismo
+   resultado: escalarlo no aporta nada y hace pensar que hace falta.
+6. **Vecinos mas cercanos**: sobre los datos escalados, porque mide distancias y sin escalar las
+   variables de rango grande dominarian el calculo. El `k` se busca con validacion cruzada sobre
+   entrenamiento, nunca mirando prueba; es el unico lugar del archivo con un `Pipeline`, y esta
+   ahi porque dentro de `cross_val_score` el escalador tiene que reajustarse en cada particion.
+7. **Comparacion**: junta las metricas de los tres y compara contra la tasa de la clase
+   mayoritaria (0.741), que es lo que acierta contestar siempre "sobrevive".
+
+Se puede correr con `-m` o directo con `python modularizado/modelado_secuencial.py`: las rutas
+salen de la ubicacion del archivo, no del directorio desde donde se llama.
