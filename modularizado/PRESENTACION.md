@@ -722,3 +722,116 @@ Lo que hice:
 Un dato para cerrar. Antes de sacar las seis columnas con fuga, el modelo daba **AUC 0.948**. Después dio **0.879**.
 
 Parece que empeoró, pero es al revés: los modelos publicados sobre este mismo dataset andan entre 0.80 y 0.86. El 0.95 era demasiado bueno para ser verdad. No estaba prediciendo la muerte, la estaba leyendo.
+
+---
+
+# Anexo — Dos pruebas rápidas
+
+Antes de meterme de lleno en el modelado probé dos cosas más. Ninguna cambió la decisión, pero las dejo acá porque la respuesta sirve.
+
+**Las dos se midieron y las dos se descartaron.** El pipeline quedó como lo cuentan las secciones de arriba: 41 columnas, sin PCA.
+
+---
+
+## Prueba 1 — Banderas de recorte
+
+### De dónde salió la idea
+
+En el lote 7 recorto los valores atípicos. El problema es que al recortarlos pierdo el dato de que ese valor *era* extremo.
+
+Un paciente con creatinina 21.5 y otro con 3.4 terminan los dos en 3.4. Para el modelo son iguales, y no lo eran.
+
+### Qué hice
+
+Agregué una bandera por cada columna que efectivamente cortó algo. Se llama `<columna>_acotado` y vale 1 en las filas donde el valor se salió de los límites.
+
+La bandera se calcula **antes** de recortar, que es el único momento en que la información existe.
+
+Cortaron 20 columnas, así que salieron 20 banderas: el archivo pasaba de **41 a 61 columnas**.
+
+### El resultado
+
+| | AUC logística | AUC boosting |
+|---|---|---|
+| Sin banderas (41 columnas) | 0.8791 | 0.8661 |
+| Con banderas (61 columnas) | 0.8783 | 0.8684 |
+
+**No aportan nada.** La diferencia está dentro del ruido: la logística baja un poco, el boosting sube un poco.
+
+### Por qué no aportaron
+
+Porque la señal ya estaba ahí. El valor recortado sigue siendo el más alto de la columna, así que el modelo ya podía distinguir "este paciente tiene creatinina alta". La bandera le repite lo mismo.
+
+Igual hay cuatro que tienen señal propia, por su correlación con `hospdead`:
+
+```
+scoma_acotado   0.344
+sps_acotado     0.248
+hday_acotado    0.243
+aps_acotado     0.202
+```
+
+Son justo las que más cortan: `scoma` recorta el 21.8% de las filas y `hday` el 16.8%. Cuando el recorte afecta a una de cada cinco filas, la bandera ya dice algo.
+
+Y hay seis que son casi inútiles: `meanbp_acotado` marca 5 filas de 7,284, `alb_acotado` 10, `temp_acotado` 12.
+
+---
+
+## Prueba 2 — ¿Se pueden reducir las variables con PCA?
+
+### La pregunta
+
+Con las banderas puestas quedaban 61 columnas, que es bastante. La idea era ver si con PCA podía bajar a unas pocas componentes sin perder rendimiento.
+
+### El resultado
+
+```
+PC1 explica   7.6% de la varianza
+PC2 explica   4.4%
+PC3 explica   4.3%
+
+Para llegar al 80% → 34 de 60 componentes
+Para llegar al 90% → 42 de 60
+```
+
+Pasar de 60 a 34 no es reducir nada. **PCA no comprime este dataset.**
+
+### Por qué no funciona
+
+PCA sirve cuando las variables están correlacionadas entre sí, porque entonces puede resumir varias en una.
+
+Acá no lo están. Las mediciones clínicas son bastante independientes: la creatinina no me dice nada del sodio, y el sodio nada de la temperatura. Cada una aporta su propio pedazo.
+
+Y encima las 12 dummies y las 20 banderas son casi ortogonales por construcción, así que suman dimensiones que PCA no puede juntar.
+
+Probé también sobre las 41 originales, sin banderas: 24 de 40 componentes para el 80%. Igual de malo.
+
+### Lo que sí funcionaría
+
+De paso comparé contra seleccionar directamente las k mejores variables:
+
+| Variables | PCA | Mejores k |
+|---|---|---|
+| 60 (todas) | 0.8783 | 0.8783 |
+| 40 | 0.8734 | **0.8796** |
+| 20 | 0.8672 | 0.8724 |
+| 10 | 0.8630 | 0.8705 |
+| 5 | 0.8594 | 0.8641 |
+
+La selección directa le gana a PCA en todos los tamaños. Con 40 variables elegidas da 0.8796, apenas mejor que usando las 60.
+
+Ahí sí hay reducción posible. Y con una ventaja: las variables siguen siendo interpretables. Puedo decir "usé `aps`, `sps` y `scoma`", no "usé PC1 y PC7".
+
+---
+
+## Por qué saqué las dos del pipeline
+
+El pipeline quedó en **41 columnas, sin banderas y sin PCA**.
+
+**Las banderas salen** porque no aportan. Agregaban 20 columnas y el AUC no se movía. Una cosa que no mejora el modelo y sí lo hace más grande no se queda solo porque funcione.
+
+**PCA sale** porque no reduce. Cambiar variables interpretables por componentes que no significan nada, y encima sin comprimir, es perder sin ganar.
+
+Las dos pruebas quedan contadas acá, que es donde sirven: el pipeline no carga código que no usa, y la clase igual puede ver qué se intentó y por qué no quedó.
+
+Lo que me falta no son menos variables: es más recall.
