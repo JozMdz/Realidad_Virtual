@@ -348,9 +348,9 @@ ver con el desbalance.
 
 # Anexo: dos pruebas rápidas
 
-Se probaron dos cosas antes de avanzar con el modelado. Ninguna cambió la decisión.
-
-Nota: el cuerpo de este documento habla de 41 columnas. Después de la primera prueba son 61.
+Se probaron dos cosas antes de avanzar con el modelado. Las dos se midieron y las dos se
+descartaron, así que el pipeline quedó tal como lo describe el cuerpo de este documento: 41
+columnas, sin banderas y sin reducción de variables.
 
 ## Prueba 1: banderas de recorte por atípicos
 
@@ -358,7 +358,7 @@ Al acotar un valor atípico se pierde el dato de que era extremo: un paciente co
 y otro con 3.4 terminan los dos en 3.4.
 
 Se agregó en el lote 7 una bandera `<columna>_acotado` por cada columna que efectivamente cortó
-algo, calculada **antes** de recortar. Cortaron 20 columnas, así que la salida pasó de 41 a 61.
+algo, calculada **antes** de recortar. Cortaron 20 columnas, así que la salida pasaba de 41 a 61.
 
 | | AUC logística | AUC boosting |
 |---|---|---|
@@ -383,7 +383,7 @@ Seis son casi constantes: `meanbp_acotado` marca 5 filas de 7,284, `alb_acotado`
 
 ## Prueba 2: reducción de variables con PCA
 
-Medida en `prueba_pca.py`, con el escalado y el PCA ajustados solo sobre entrenamiento.
+Medida con el escalado y el PCA ajustados solo sobre entrenamiento.
 
 ```
 PC1 explica 7.6% de la varianza
@@ -412,13 +412,15 @@ La selección directa le gana a PCA en todos los tamaños, y deja las variables 
 Reserva metodológica: PCA mezcla columnas continuas con columnas 0/1, donde la varianza no
 significa lo mismo. No invalida la conclusión, que es amplia, pero conviene declararlo.
 
-## Por qué se mantiene el estado actual
+## Por qué ninguna de las dos quedó en el pipeline
 
-- **Las banderas se conservan** aunque no muevan el AUC: no tienen costo, la validación del lote
-  11 pasa igual, y dejan registrado qué valores fueron recortados. `MINIMO_BANDERA_ATIPICOS` en
-  `config.py` sube el piso si molestan (con `0.01` quedan las 14 que cortan al menos el 1%).
-- **No se aplica PCA**: cambiar 60 variables interpretables por 34 componentes sin significado es
-  perder sin ganar.
-- **No se reduce el número de variables todavía**: con 60 el modelo corre rápido y no hay
-  sobreajuste evidente. Reducir es una optimización, y el problema pendiente no es el número de
-  variables sino el recall de la clase minoritaria.
+- **Las banderas no se conservan**: agregaban 20 columnas y el AUC no se movía. Algo que no
+  mejora el modelo y sí agranda la salida no se justifica solo porque funcione.
+- **No se aplica PCA**: no comprime, y cambiar variables interpretables por componentes sin
+  significado es perder sin ganar.
+- **No se reduce el número de variables**: con 40 el modelo corre rápido y no hay sobreajuste
+  evidente. Reducir es una optimización, y el problema pendiente no es el número de variables
+  sino el recall de la clase minoritaria.
+
+El código de las dos pruebas se quitó del repositorio; queda el registro de qué se midió y qué
+dio, que es lo que hace falta para no volver a probar lo mismo.

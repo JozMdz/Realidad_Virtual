@@ -729,7 +729,7 @@ Parece que empeoró, pero es al revés: los modelos publicados sobre este mismo 
 
 Antes de meterme de lleno en el modelado probé dos cosas más. Ninguna cambió la decisión, pero las dejo acá porque la respuesta sirve.
 
-**Aviso:** las secciones de arriba hablan de 41 columnas. Después de la primera prueba son 61.
+**Las dos se midieron y las dos se descartaron.** El pipeline quedó como lo cuentan las secciones de arriba: 41 columnas, sin PCA.
 
 ---
 
@@ -747,7 +747,7 @@ Agregué una bandera por cada columna que efectivamente cortó algo. Se llama `<
 
 La bandera se calcula **antes** de recortar, que es el único momento en que la información existe.
 
-Cortaron 20 columnas, así que quedaron 20 banderas: el archivo pasó de **41 a 61 columnas**.
+Cortaron 20 columnas, así que salieron 20 banderas: el archivo pasaba de **41 a 61 columnas**.
 
 ### El resultado
 
@@ -758,7 +758,7 @@ Cortaron 20 columnas, así que quedaron 20 banderas: el archivo pasó de **41 a 
 
 **No aportan nada.** La diferencia está dentro del ruido: la logística baja un poco, el boosting sube un poco.
 
-### Por qué no aportan
+### Por qué no aportaron
 
 Porque la señal ya estaba ahí. El valor recortado sigue siendo el más alto de la columna, así que el modelo ya podía distinguir "este paciente tiene creatinina alta". La bandera le repite lo mismo.
 
@@ -781,7 +781,7 @@ Y hay seis que son casi inútiles: `meanbp_acotado` marca 5 filas de 7,284, `alb
 
 ### La pregunta
 
-61 columnas es bastante. La idea era ver si con PCA podía bajar a unas pocas componentes sin perder rendimiento.
+Con las banderas puestas quedaban 61 columnas, que es bastante. La idea era ver si con PCA podía bajar a unas pocas componentes sin perder rendimiento.
 
 ### El resultado
 
@@ -824,16 +824,14 @@ Ahí sí hay reducción posible. Y con una ventaja: las variables siguen siendo 
 
 ---
 
-## Por qué me quedo como estoy
+## Por qué saqué las dos del pipeline
 
-Con las 61 columnas, sin reducir.
+El pipeline quedó en **41 columnas, sin banderas y sin PCA**.
 
-**Las banderas se quedan** aunque no muevan el AUC. No cuestan nada, no rompen nada (la validación del lote 11 pasa igual), y documentan cuáles valores tuve que recortar. Si más adelante quiero revisar el efecto del recorte, la información está.
+**Las banderas salen** porque no aportan. Agregaban 20 columnas y el AUC no se movía. Una cosa que no mejora el modelo y sí lo hace más grande no se queda solo porque funcione.
 
-Si en algún momento molestan, `MINIMO_BANDERA_ATIPICOS` en `config.py` sube el piso: con `0.01` solo quedan las 14 que cortan al menos el 1% de las filas.
+**PCA sale** porque no reduce. Cambiar variables interpretables por componentes que no significan nada, y encima sin comprimir, es perder sin ganar.
 
-**No aplico PCA** porque no reduce. Cambiar 60 variables interpretables por 34 componentes que no significan nada es perder y no ganar.
+Las dos pruebas quedan contadas acá, que es donde sirven: el pipeline no carga código que no usa, y la clase igual puede ver qué se intentó y por qué no quedó.
 
-**No reduzco variables todavía** porque con 60 el modelo ya corre rápido y no hay problema de sobreajuste evidente. Reducir es una optimización, y todavía no tengo el problema que la justifique: lo que me falta no son menos variables, es más recall.
-
-Las pruebas quedan en `prueba_pca.py`, así que se pueden volver a correr cuando cambie algo.
+Lo que me falta no son menos variables: es más recall.
