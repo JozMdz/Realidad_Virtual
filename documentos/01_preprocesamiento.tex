@@ -205,21 +205,7 @@ fue suscrita. Esta orden no constituye un dato clínico de ingreso sino una deci
 durante la hospitalización, con frecuencia cuando el equipo médico ya ha constatado el deterioro
 del paciente. La Tabla \ref{tab:dnr} evidencia esta relación.
 
-\begin{table}[H]
-\centering
-\caption{Distribución de la orden de no reanimar según el desenlace hospitalario}
-\label{tab:dnr}
-\small
-\begin{tabular}{p{4.5cm} r r}
-\toprule
-\textbf{Estado de la orden} & \textbf{Sobrevive} & \textbf{Fallece} \\
-\midrule
-Suscrita antes del ingreso  & 2.4\%  & 3.2\%  \\
-Suscrita después del ingreso & 16.8\% & 77.9\% \\
-Sin orden de no reanimar     & 80.8\% & 18.9\% \\
-\bottomrule
-\end{tabular}
-\end{table}
+\input{tablas/dnr.tex}
 
 Entre los pacientes que fallecen durante la hospitalización, el 77.9\% cuenta con una orden
 suscrita con posterioridad al ingreso, frente al 16.8\% de quienes sobreviven. Esta asociación no
@@ -265,50 +251,39 @@ correspondiente.
 
 \input{tablas/exclusiones.tex}
 
-\subsection{Verificación empírica del efecto}
+\subsection{Comprobación del efecto}
 \label{sec:evidencia}
 
-Con el propósito de cuantificar la incidencia de las exclusiones, se entrenó una regresión
-logística bajo dos configuraciones idénticas en todo excepto en la presencia de las seis columnas
-posteriores al ingreso. Los resultados se presentan en la Tabla \ref{tab:fuga}.
+Las exclusiones descritas se apoyan en el significado de cada variable y en el momento en que se
+registra. Conviene sin embargo comprobar que la decisión tiene consecuencias reales sobre el
+resultado, y no sólo fundamento conceptual.
 
-\begin{table}[H]
-\centering
-\caption{Efecto de las variables posteriores al ingreso sobre el desempeño del modelo}
-\label{tab:fuga}
-\small
-\begin{tabular}{p{6.5cm} r r}
-\toprule
-\textbf{Configuración} & \textbf{Columnas} & \textbf{AUC} \\
-\midrule
-Con las variables posteriores al ingreso & 48 & 0.948 \\
-Sin las variables posteriores al ingreso & 41 & 0.879 \\
-\bottomrule
-\end{tabular}
-\end{table}
+Para ello se entrenó una regresión logística bajo dos configuraciones idénticas en todo excepto
+en la presencia de las seis columnas posteriores al ingreso. Esta comprobación no forma parte del
+procedimiento de preprocesamiento: es una verificación realizada una sola vez para sustentar la
+decisión.
 
-Para dimensionar la magnitud de estos valores se requiere un punto de comparación obtenido sobre
-los mismos datos. El conjunto incluye las estimaciones producidas por el modelo pronóstico del
-propio estudio SUPPORT y por el médico tratante, que pueden evaluarse directamente frente a
-\texttt{hospdead}. La Tabla \ref{tab:referencia} presenta su capacidad discriminante.
+\input{tablas/fuga.tex}
+
+La diferencia es considerable, pero por sí sola no indica cuál de los dos valores es el correcto.
+Para interpretarla hace falta un punto de comparación obtenido sobre los mismos datos.
+
+El conjunto ofrece uno. Entre sus columnas figuran las estimaciones producidas por el modelo
+pronóstico del propio estudio SUPPORT y por el médico tratante, que pueden evaluarse directamente
+frente a \texttt{hospdead}.
 
 \input{tablas/referencia.tex}
 
-El modelo pronóstico del estudio alcanza un AUC de 0.841 y la estimación del médico tratante
-0.814. El valor de 0.879 obtenido tras excluir las variables posteriores al ingreso se sitúa en
-ese mismo orden de magnitud, resultado esperable para un modelo construido sobre información
-clínica de base.
+El modelo del estudio alcanza 0.841 y el médico tratante 0.814. El valor de 0.879 obtenido tras
+excluir las variables posteriores al ingreso se sitúa en ese mismo orden, resultado esperable para
+un modelo construido sobre información clínica de base.
 
-El valor de 0.948, en cambio, supera en más de diez puntos tanto al modelo del estudio como al
-juicio del especialista. Un clasificador entrenado únicamente con mediciones clínicas no debería
-superar de ese modo a quienes disponen de la evolución completa del paciente, lo que constituye
-un indicio de que el desempeño no proviene de la información clínica.
+El valor de 0.948 supera a ambos por más de diez puntos. Un clasificador que dispone únicamente de
+mediciones registradas al tercer día no debería aventajar de ese modo a quienes observaron la
+evolución completa del paciente. Esa desproporción es el indicio de que el desempeño no proviene
+de la información clínica, sino de columnas que recogen lo ya ocurrido.
 
-La reducción del desempeño no debe interpretarse por tanto como una pérdida de capacidad
-predictiva, sino como la eliminación de una ventaja ilegítima: el modelo inicial no predecía el
-fallecimiento a partir de información clínica, sino que lo inferían a partir de registros
-generados como consecuencia del propio desenlace.
-
+La exclusión, por tanto, no reduce la capacidad del modelo: elimina una ventaja que no era suya.
 
 %============================================================================
 \section{Limpieza}
@@ -463,47 +438,38 @@ mediciones clínicas son en buena medida independientes, dado que la creatinina 
 concentración de sodio ni ésta sobre la temperatura. Las doce columnas indicadoras generadas por
 la codificación son, además, aproximadamente ortogonales por construcción.
 
-\subsection{Comparación con selección directa de variables}
+\subsection{Comparación con otra forma de reducir}
 
-Como alternativa se evaluó la selección directa de las $k$ variables más informativas mediante el
-estadístico F univariado. La Tabla \ref{tab:reduccion} compara ambos procedimientos según el área
-bajo la curva obtenida por una regresión logística sobre el conjunto de prueba.
+Descartado el análisis de componentes principales, cabe preguntarse si alguna otra forma de
+reducción habría funcionado mejor. La alternativa más directa consiste en conservar las variables
+tal como están y quedarse sólo con las más informativas, medidas por su relación individual con la
+variable objetivo.
 
-\begin{table}[H]
-\centering
-\caption{Comparación entre componentes principales y selección directa de variables}
-\label{tab:reduccion}
-\small
-\begin{tabular}{r r r}
-\toprule
-\textbf{Variables} & \textbf{Componentes principales} & \textbf{Selección directa} \\
-\midrule
-40 (todas) & 0.8791 & 0.8791 \\
-30 & 0.8779 & 0.8798 \\
-20 & 0.8663 & 0.8723 \\
-15 & 0.8659 & 0.8725 \\
-10 & 0.8620 & 0.8723 \\
-5  & 0.8517 & 0.8691 \\
-\bottomrule
-\end{tabular}
-\end{table}
+La comparación que sigue tampoco forma parte del preprocesamiento. Se realizó para decidir si
+convenía reducir, y el resultado fue que no hacía falta.
+
+\input{tablas/reduccion.tex}
 
 La selección directa supera a los componentes principales en todos los tamaños evaluados. Con 30
-variables seleccionadas se obtiene un AUC de 0.8798, ligeramente superior al alcanzado con las 40
-disponibles. Las quince variables más informativas resultaron ser los tres puntajes de severidad
-\texttt{scoma}, \texttt{sps} y \texttt{aps}, el día de ingreso al estudio, cuatro mediciones de
-laboratorio, el índice de funcionalidad y seis indicadores de grupo diagnóstico.
+variables alcanza 0.8798, valor ligeramente superior al obtenido con las 40 disponibles, lo que
+indica que una parte de las variables no está aportando.
 
-A diferencia de los componentes principales, este procedimiento conserva la identidad de las
-variables, lo que permite describir el modelo en términos clínicos. No obstante, la reducción no
-se incorporó al conjunto final: con 40 variables el entrenamiento no presenta dificultades de
-cómputo ni indicios de sobreajuste, de modo que la simplificación no responde a una necesidad
-verificada.
+La diferencia de fondo entre ambos procedimientos no está en el desempeño sino en lo que queda
+después. Los componentes principales producen combinaciones de variables que no corresponden a
+ninguna magnitud clínica; la selección directa conserva las variables originales, de modo que el
+modelo sigue pudiendo describirse en términos de puntajes de gravedad y resultados de laboratorio.
+Las quince más informativas resultaron ser los tres puntajes de severidad \texttt{scoma},
+\texttt{sps} y \texttt{aps}, el día de ingreso al estudio, cuatro mediciones de laboratorio, el
+índice de funcionalidad y seis indicadores de grupo diagnóstico.
 
-Debe consignarse una reserva metodológica. El análisis de componentes principales se aplicó sobre
-un conjunto que combina variables continuas con variables indicadoras de valor cero o uno, en las
-cuales la varianza no admite la misma interpretación. Esta circunstancia no invalida la conclusión,
-dada su magnitud, pero conviene declararla.
+Aun así, la reducción no se incorporó al conjunto final. Con 40 variables el entrenamiento no
+presenta dificultades de cómputo ni indicios de sobreajuste, de manera que simplificar respondería
+a una preferencia y no a una necesidad verificada.
+
+Resta declarar una reserva: el análisis de componentes principales se aplicó sobre un conjunto que
+mezcla variables continuas con indicadoras de valor cero o uno, donde la varianza no significa lo
+mismo. La magnitud del resultado hace que la conclusión se sostenga igual, pero conviene dejarlo
+dicho.
 
 %============================================================================
 \section{Fuga de información por orden de operaciones}
@@ -528,18 +494,19 @@ estratificada: la proporción de fallecimientos se mantiene en 25.9\% en ambos c
 de ese punto, todo parámetro se estima sobre el conjunto de entrenamiento y se aplica sin
 modificación al de prueba.
 
-\subsection{Efecto del orden entre imputación y acotamiento}
+\subsection{Por qué el acotamiento va antes que la imputación}
 
-Una aplicación concreta del principio anterior se verifica en la relación entre los lotes 7 y 8.
-El acotamiento de valores atípicos se ejecuta \textbf{antes} de la imputación, y no después.
+El mismo principio tiene una consecuencia concreta en la relación entre los lotes 7 y 8: el
+acotamiento de valores atípicos se ejecuta \textbf{antes} de la imputación, y no después. El orden
+inverso parece equivalente, pero no lo es.
 
-El fundamento es el siguiente. Si una columna presenta una proporción elevada de valores ausentes
-y éstos se completan con la mediana, una fracción considerable de los registros pasa a compartir
-ese valor. Los cuartiles se desplazan hacia el centro de la distribución, el rango intercuartílico
-se contrae y los límites resultantes se estrechan hasta perder correspondencia con la escala real
-de la variable.
+El motivo puede enunciarse en términos simples. Si una columna tiene muchos valores ausentes y se
+completan con la mediana, buena parte de los registros pasa a compartir ese mismo valor. Los
+cuartiles se juntan alrededor del centro, el rango intercuartílico casi desaparece y los límites
+que de él se derivan quedan tan estrechos que ya no describen la escala real de la variable.
 
-La Tabla \ref{tab:ordenric} cuantifica el efecto sobre cinco columnas.
+La siguiente comparación se calculó para comprobarlo. Tampoco forma parte del procedimiento: los
+límites de la columna derecha corresponden a lo que habría ocurrido con el orden inverso.
 
 \input{tablas/orden-ric.tex}
 

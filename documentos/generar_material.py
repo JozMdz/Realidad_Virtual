@@ -275,6 +275,139 @@ def tabla_orden_ric():
     return total_real, total_imputado
 
 
+def tabla_dnr(crudo):
+    """Distribucion de la orden de no reanimar segun el desenlace."""
+    reparto = pd.crosstab(crudo["dnr"], crudo[config.OBJETIVO], normalize="columns") * 100
+    etiquetas = {
+        "dnr before sadm": "Suscrita antes del ingreso",
+        "dnr after sadm": "Suscrita después del ingreso",
+        "no dnr": "Sin orden de no reanimar",
+    }
+    cuerpo = "\n".join(
+        f"{etiquetas[i]} & {reparto.loc[i, 0]:.1f}\\% & {reparto.loc[i, 1]:.1f}\\% \\\\"
+        for i in etiquetas if i in reparto.index)
+    (TABLAS / "dnr.tex").write_text(
+        "\\begin{table}[H]\n\\centering\n"
+        "\\caption{Distribución de la orden de no reanimar según el desenlace hospitalario}\n"
+        "\\label{tab:dnr}\n\\small\n"
+        "\\begin{tabular}{p{5cm} r r}\n\\toprule\n"
+        "\\textbf{Estado de la orden} & \\textbf{Sobrevive} & \\textbf{Fallece} \\\\\n"
+        "\\midrule\n"
+        f"{cuerpo}\n"
+        "\\bottomrule\n\\end{tabular}\n\\end{table}\n", encoding="utf-8")
+
+
+def _preparar(excluidas):
+    """Reproduce el pipeline excluyendo el conjunto de columnas indicado."""
+    from sklearn.model_selection import train_test_split  # noqa: F401
+
+    datos = cargar_crudo().dropna(how="all")
+    datos = datos.drop(columns=[c for c in excluidas if c in datos.columns])
+    datos = datos.drop_duplicates().reset_index(drop=True)
+
+    entrenamiento = datos.groupby(config.OBJETIVO, group_keys=False).sample(
+        frac=config.FRACCION_ENTRENAMIENTO, random_state=config.SEMILLA)
+    prueba = datos.drop(entrenamiento.index).copy()
+    entrenamiento = entrenamiento.copy()
+
+    faltantes = entrenamiento.isna().mean() * 100
+    descartadas = faltantes[faltantes > config.LIMITE_FALTANTES].index.tolist()
+    entrenamiento = entrenamiento.drop(columns=descartadas)
+    prueba = prueba.drop(columns=descartadas)
+
+    numericas = entrenamiento.select_dtypes(include="number").columns.tolist()
+    categoricas = [c for c in entrenamiento.columns if c not in numericas]
+    for columna in [c for c in numericas if entrenamiento[c].nunique() > 2]:
+        q1, q3 = entrenamiento[columna].quantile(0.25), entrenamiento[columna].quantile(0.75)
+        inferior, superior = q1 - 1.5 * (q3 - q1), q3 + 1.5 * (q3 - q1)
+        entrenamiento[columna] = entrenamiento[columna].clip(inferior, superior)
+        prueba[columna] = prueba[columna].clip(inferior, superior)
+    for columna in numericas:
+        mediana = entrenamiento[columna].median()
+        entrenamiento[columna] = entrenamiento[columna].fillna(mediana)
+        prueba[columna] = prueba[columna].fillna(mediana)
+    for columna in categoricas:
+        moda = entrenamiento[columna].mode(dropna=True)[0]
+        entrenamiento[columna] = entrenamiento[columna].fillna(moda)
+        prueba[columna] = prueba[columna].fillna(moda)
+
+    a = pd.get_dummies(entrenamiento, columns=categoricas, drop_first=True)
+    b = pd.get_dummies(prueba, columns=categoricas, drop_first=True).reindex(
+        columns=a.columns, fill_value=0)
+    booleanas = [c for c in a.columns if a[c].dtype == bool]
+    a[booleanas] = a[booleanas].astype(int)
+    b[booleanas] = b[booleanas].astype(int)
+    return a, b
+
+
+def _auc_logistica(a, b, reductor=None):
+    """AUC de una regresion logistica sobre el conjunto de prueba."""
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.metrics import roc_auc_score
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import StandardScaler
+
+    X, y = a.drop(columns=config.OBJETIVO), a[config.OBJETIVO]
+    Xp, yp = b.drop(columns=config.OBJETIVO), b[config.OBJETIVO]
+    pasos = [("escalado", StandardScaler())]
+    if reductor is not None:
+        pasos.append(("reductor", reductor))
+    pasos.append(("modelo", LogisticRegression(max_iter=3000, random_state=config.SEMILLA)))
+    modelo = Pipeline(pasos).fit(X, y)
+    return roc_auc_score(yp, modelo.predict_proba(Xp)[:, 1])
+
+
+def tabla_fuga():
+    """Compara el desempeno con y sin las columnas posteriores al ingreso."""
+    base = set(config.COLUMNAS_EXCLUIDAS)
+    posteriores = set(config.COLUMNAS_POSTERIORES)
+    filas = []
+    for etiqueta, excluidas in [("Con las variables posteriores al ingreso", base),
+                                ("Sin las variables posteriores al ingreso", base | posteriores)]:
+        a, b = _preparar(excluidas)
+        filas.append((etiqueta, a.shape[1], f"{_auc_logistica(a, b):.3f}"))
+
+    cuerpo = "\n".join(f"{e} & {n} & {v} \\\\" for e, n, v in filas)
+    (TABLAS / "fuga.tex").write_text(
+        "\\begin{table}[H]\n\\centering\n"
+        "\\caption{Efecto de las variables posteriores al ingreso sobre el desempeño}\n"
+        "\\label{tab:fuga}\n\\small\n"
+        "\\begin{tabular}{p{6.5cm} r r}\n\\toprule\n"
+        "\\textbf{Configuración} & \\textbf{Columnas} & \\textbf{AUC} \\\\\n\\midrule\n"
+        f"{cuerpo}\n"
+        "\\bottomrule\n\\end{tabular}\n\\end{table}\n", encoding="utf-8")
+    return filas
+
+
+def tabla_reduccion():
+    """Compara componentes principales contra seleccion directa de variables."""
+    from sklearn.decomposition import PCA
+    from sklearn.feature_selection import SelectKBest, f_classif
+
+    a = pd.read_csv(config.RUTA_TRAIN)
+    b = pd.read_csv(config.RUTA_TEST)
+    total = a.shape[1] - 1
+    completo = _auc_logistica(a, b)
+
+    filas = [(f"{total} (todas)", f"{completo:.4f}", f"{completo:.4f}")]
+    for k in (30, 20, 15, 10, 5):
+        pca = _auc_logistica(a, b, PCA(n_components=k, random_state=config.SEMILLA))
+        mejores = _auc_logistica(a, b, SelectKBest(f_classif, k=k))
+        filas.append((str(k), f"{pca:.4f}", f"{mejores:.4f}"))
+
+    cuerpo = "\n".join(f"{v} & {p} & {m} \\\\" for v, p, m in filas)
+    (TABLAS / "reduccion.tex").write_text(
+        "\\begin{table}[H]\n\\centering\n"
+        "\\caption{Componentes principales frente a selección directa de variables}\n"
+        "\\label{tab:reduccion}\n\\small\n"
+        "\\begin{tabular}{r r r}\n\\toprule\n"
+        "\\textbf{Variables} & \\textbf{Componentes principales} & "
+        "\\textbf{Selección directa} \\\\\n\\midrule\n"
+        f"{cuerpo}\n"
+        "\\bottomrule\n\\end{tabular}\n\\end{table}\n", encoding="utf-8")
+    return filas
+
+
 def main():
     """Genera todo el material y reporta los archivos producidos."""
     FIGURAS.mkdir(exist_ok=True)
@@ -290,6 +423,9 @@ def main():
     referencia = tabla_referencia(crudo)
     acotadas = tabla_atipicos()
     total_real, total_imputado = tabla_orden_ric()
+    tabla_dnr(crudo)
+    fuga = tabla_fuga()
+    reduccion = tabla_reduccion()
 
     print(f"Variables en el csv original: {crudo.shape[1]}")
     print(f"Variables verificadas contra la ficha oficial: {crudo.columns.isin(ficha.index).sum()}")
@@ -299,6 +435,10 @@ def main():
         print(f"  {etiqueta}: {auc} (n={casos})")
     print(f"Columnas con registros acotados: {acotadas}")
     print(f"Registros acotados -- antes de imputar: {total_real}, despues: {total_imputado}")
+    print("AUC con y sin las columnas posteriores al ingreso:")
+    for etiqueta, columnas, auc in fuga:
+        print(f"  {etiqueta}: {columnas} columnas, AUC={auc}")
+    print(f"Reduccion evaluada en {len(reduccion)} tamanos")
     print("Generado: figuras/clases.png y las tablas en tablas/")
 
 
