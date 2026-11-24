@@ -569,7 +569,27 @@ columnas cada uno, sin valores ausentes y con la variable objetivo en la última
 
 El preprocesamiento transformó un archivo de 9{,}105 registros y 45 columnas, con valores
 ausentes y variables categóricas en texto, en dos conjuntos numéricos y completos de 41 columnas
-aptos para el entrenamiento y la evaluación de un clasificador.
+aptos para el entrenamiento y la evaluación de un clasificador. La Tabla \ref{tab:cadena} resume
+el recuento de columnas a lo largo del procedimiento.
+
+\begin{table}[H]
+\centering
+\caption{Recuento de columnas en cada etapa}
+\label{tab:cadena}
+\small
+\begin{tabular}{p{7.4cm} r}
+\toprule
+\textbf{Etapa} & \textbf{Columnas} \\
+\midrule
+Archivo original                                      & 45 \\
+Tras excluir por fuga de información y redundancia    & 31 \\
+Tras descartar las de más del 50\% de valores ausentes & 29 \\
+Tras codificar las cinco variables categóricas        & 41 \\
+\midrule
+Variables de entrada, sin la columna objetivo         & \textbf{40} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 Las operaciones de limpieza, transformación y reducción se ejecutaron conforme a los
 procedimientos habituales. No obstante, el resultado estuvo determinado principalmente por dos

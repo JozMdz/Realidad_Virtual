@@ -24,7 +24,10 @@ supervisada}: a cada paciente debe asignársele una de dos categorías, y el apr
 a partir de ejemplos cuya categoría es conocida.
 
 El conjunto empleado está conformado por 7{,}284 registros de entrenamiento y 1{,}821 de prueba,
-con 40 variables de entrada y la variable objetivo. Todas las variables son numéricas y no
+con 40 variables de entrada y la variable objetivo. Esas 40 resultan de las 45 columnas del
+archivo original tras excluir las que incurrían en fuga de información o resultaban redundantes,
+descartar las de mayor proporción de valores ausentes y codificar las categóricas, procedimiento
+documentado en el informe de preprocesamiento. Todas las variables son numéricas y no
 contienen valores ausentes, condición establecida durante el preprocesamiento.
 
 Una característica del conjunto condiciona la interpretación de los resultados: las clases están
