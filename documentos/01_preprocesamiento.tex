@@ -284,9 +284,7 @@ frente a \texttt{hospdead}.
 
 El modelo del estudio alcanza 0.841 y la estimación del médico 0.814. La comparación es
 indicativa y no estricta: ambas estimaciones se refieren a la supervivencia a dos y seis meses, se
-evalúan aquí frente a un desenlace distinto, y se calculan sobre la totalidad del archivo y no
-sobre el conjunto de prueba. Restringidas a ese conjunto alcanzan 0.857 y 0.841 respectivamente,
-de modo que la conclusión no depende del alcance elegido.
+evalúan aquí frente a un desenlace distinto y se calculan sobre la totalidad del archivo.
 
 El valor de 0.879 obtenido tras excluir las variables posteriores al ingreso se sitúa en ese mismo
 orden de magnitud. El de 0.948 lo supera por más de nueve puntos.
@@ -445,16 +443,9 @@ Los resultados no respaldan la aplicación del método. El primer componente exp
 varianza requiere 24 de los 40 componentes disponibles, y el 90\% requiere 29. Una reducción de 40
 a 24 dimensiones no constituye una compresión que justifique la pérdida de interpretabilidad.
 
-Una explicación compatible con el resultado se encuentra en la estructura de correlaciones del
-conjunto. El análisis de componentes principales resume eficazmente variables correlacionadas
-entre sí, y en estos datos las correlaciones son en general bajas: entre las veintiuna variables
-continuas, la mediana del valor absoluto del coeficiente es 0.049, con pocas excepciones
-(\texttt{sps}--\texttt{aps}, 0.805, y \texttt{crea}--\texttt{bun}, 0.582).
-
-Las diecisiete columnas indicadoras aportan además varianza difícil de comprimir, aunque por el
-motivo contrario: las que proceden de una misma variable categórica son mutuamente excluyentes y
-por tanto están correlacionadas de forma negativa, hasta $-0.832$ entre \texttt{race\_white} y
-\texttt{race\_black}. Esa dependencia no las agrupa en pocos componentes.
+El análisis de componentes principales resume eficazmente conjuntos de variables correlacionadas
+entre sí. El resultado obtenido indica que esa condición no se cumple aquí: si las variables
+compartieran buena parte de su variación, bastarían unos pocos componentes para recogerla.
 
 \subsection{Comparación con otra forma de reducir}
 
@@ -482,9 +473,8 @@ Las quince más informativas resultaron ser los tres puntajes de severidad \text
 grupo diagnóstico y el indicador de presencia de cáncer.
 
 Aun así, la reducción no se incorporó al conjunto final. Con 40 variables el entrenamiento no
-presenta dificultades de cómputo, y el árbol de decisión obtiene un AUC de 0.848 sobre
-entrenamiento frente a 0.847 sobre prueba, diferencia que no sugiere sobreajuste. Simplificar
-respondería por tanto a una preferencia y no a una necesidad verificada.
+presenta dificultades de cómputo, de manera que simplificar respondería a una preferencia y no a
+una necesidad verificada.
 
 Resta declarar una reserva: el análisis de componentes principales se aplicó sobre un conjunto que
 mezcla variables continuas con indicadoras de valor cero o uno, donde la varianza no significa lo

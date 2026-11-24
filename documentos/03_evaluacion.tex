@@ -155,11 +155,10 @@ particiones, los promedios de ambos difieren en 0.000043, de modo que no resulta
 partir de estos valores.
 
 Los promedios de la validación cruzada resultan inferiores a los obtenidos sobre el conjunto de
-prueba: 0.854 frente a 0.879 en la regresión logística. La diferencia excede lo atribuible al
-tamaño del entrenamiento, pues reentrenar con el 90\% de los registros en lugar de su totalidad
-modifica el AUC sobre prueba en menos de una milésima. Corresponde por tanto a variación propia de
-la partición evaluada, de modo que el valor de 0.879 conviene leerse como el obtenido sobre una
-partición concreta y no como la expectativa del modelo.
+prueba: 0.854 frente a 0.879 en la regresión logística. La diferencia corresponde a la variación
+entre particiones, que es precisamente lo que este procedimiento permite estimar. Conviene por
+tanto leer el valor de 0.879 como el obtenido sobre una partición concreta y no como la
+expectativa del modelo.
 
 %============================================================================
 \section{Pruebas de significancia estadística}
