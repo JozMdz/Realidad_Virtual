@@ -26,7 +26,6 @@ jobs:
         with:
           working_directory: documentos
           root_file: |
-            00_prueba.tex
             01_preprocesamiento.tex
 
       - name: Publicar los PDF
