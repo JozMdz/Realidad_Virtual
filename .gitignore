@@ -1,2 +1,10 @@
 __pycache__/
 *.pyc
+documentos/*.aux
+documentos/*.log
+documentos/*.out
+documentos/*.toc
+documentos/*.fls
+documentos/*.fdb_latexmk
+documentos/*.synctex.gz
+documentos/*.pdf
