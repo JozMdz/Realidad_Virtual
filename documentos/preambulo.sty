@@ -69,7 +69,7 @@
 \RequirePackage{verbatim}
 \RequirePackage{xurl}
 \RequirePackage[pdftex,
-            pdfauthor={José Méndez},
+            pdfauthor={José Guadalupe Méndez Pérez},
             pdfproducer={Latex con hyperref},
             pdfcreator={pdflatex}]{hyperref}
 \urlstyle{same}
@@ -98,12 +98,14 @@
 \newcommand{\institucion}{Universidad Autónoma de Tamaulipas}
 \newcommand{\facultad}{Facultad de Ingeniería Tampico}
 \newcommand{\division}{División de Estudios de Posgrado e Investigación}
-\newcommand{\autor}{José Méndez}
+\newcommand{\programa}{Doctorado en Ciencias de la Computación}
+\newcommand{\materia}{Realidad Virtual}
+\newcommand{\autor}{José Guadalupe Méndez Pérez}
 \newcommand{\lugarfecha}{Tampico, Tamaulipas; México. Noviembre 2026}
 \newcommand{\archivologo}{logos_uat_fi.png}
 
-% \portada{titulo del documento}{materia}
-\newcommand{\portada}[2]{%
+% \portada{titulo del documento}
+\newcommand{\portada}[1]{%
   \begin{titlepage}
     \begin{center}
       \textsc{\Large \institucion}\\[1em]
@@ -123,7 +125,8 @@
 
       \parbox{\textwidth}{\centering\baselineskip=2.5em\textsc{\Large\textbf{#1}}}\\[2.5em]
 
-      \textsc{\large #2}\\[2em]
+      \textsc{\large Materia: \materia}\\[1em]
+      \textsc{\large \programa}\\[2.5em]
 
       \textsc{presenta}\\[1em]
       \textsc{\Large \autor}\\[2em]
