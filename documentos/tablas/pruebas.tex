@@ -1,0 +1,15 @@
+\begin{table}[H]
+\centering
+\caption{Comparación por pares. Los valores $p$ incluyen corrección de Bonferroni para tres comparaciones; el asterisco indica significancia al 5\%.}
+\label{tab:pruebas}
+\small
+\begin{tabular}{p{5.2cm} r c r}
+\toprule
+\textbf{Comparación} & \textbf{Wilcoxon} & \textbf{Aciertos exclusivos} & \textbf{McNemar} \\
+\midrule
+Regresión logística vs. Árbol de decisión & 0.0059* & 95 / 59 & 0.0139* \\
+Regresión logística vs. Vecinos más cercanos & 0.0059* & 123 / 69 & 0.0004* \\
+Árbol de decisión vs. Vecinos más cercanos & 1.0000 & 118 / 100 & 0.7485 \\
+\bottomrule
+\end{tabular}
+\end{table}

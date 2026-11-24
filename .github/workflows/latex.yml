@@ -28,6 +28,7 @@ jobs:
           root_file: |
             01_preprocesamiento.tex
             02_modelos.tex
+            03_evaluacion.tex
 
       - name: Publicar los PDF
         uses: actions/upload-artifact@v4

@@ -1,0 +1,282 @@
+\documentclass[11pt]{article}
+\usepackage{preambulo}
+\addbibresource{bibliografia.bib}
+
+\begin{document}
+
+\portada{Evaluación del modelo}
+
+\tableofcontents
+\newpage
+
+%============================================================================
+\section{Objetivo y protocolo de evaluación}
+%============================================================================
+
+El presente documento evalúa los tres clasificadores entrenados sobre el conjunto SUPPORT2
+\parencite{support2} para predecir la variable \texttt{hospdead}, documentados en el informe
+anterior: regresión logística, árbol de decisión y vecinos más cercanos, acompañados de un modelo
+de referencia que predice siempre la clase mayoritaria.
+
+La evaluación se realizó sobre el conjunto de prueba, conformado por 1{,}821 registros que no
+intervinieron en ninguna etapa del entrenamiento ni en la selección de parámetros. La estabilidad
+de los resultados se verificó adicionalmente mediante validación cruzada sobre el conjunto de
+entrenamiento.
+
+El propósito no se limita a determinar cuál modelo obtiene el mejor valor en cada métrica. Un
+único número de desempeño admite lecturas erróneas en conjuntos desbalanceados, y una diferencia
+entre dos modelos puede deberse al azar de la partición. La evaluación aborda por tanto tres
+preguntas: qué miden las métricas empleadas, qué tan estables son los resultados, y si las
+diferencias observadas entre modelos son estadísticamente significativas.
+
+%============================================================================
+\section{Métricas empleadas}
+%============================================================================
+
+\subsection{Por qué la exactitud resulta insuficiente}
+
+La exactitud expresa la proporción de casos clasificados correctamente. Su interpretación directa
+la convierte en la métrica de uso más extendido, pero en conjuntos desbalanceados resulta
+engañosa.
+
+En el conjunto analizado los fallecimientos representan el 25.9\% de los registros. Un
+clasificador que asignara invariablemente la categoría mayoritaria acertaría en el 74.1\% de los
+casos sin utilizar ninguna variable de entrada. Ese valor constituye el piso de la métrica, no su
+origen: una exactitud de 0.80 no representa un acierto de ocho de cada diez casos sobre un punto
+de partida nulo, sino una mejora de seis puntos sobre un modelo que no aprende.
+
+Por ese motivo el modelo de referencia se incorpora a todas las tablas de este documento.
+
+\subsection{Métricas aplicadas}
+
+La evaluación emplea cinco métricas. Las tres últimas se calculan sobre la clase minoritaria, que
+corresponde a los pacientes que fallecen y constituye el objeto de interés.
+
+\begin{itemize}
+\item \textbf{AUC}: área bajo la curva ROC. Mide la capacidad de ordenar a los pacientes por
+      riesgo, con independencia del umbral de decisión. Un valor de 0.5 equivale al azar.
+\item \textbf{Exactitud}: proporción de clasificaciones correctas sobre el total.
+\item \textbf{Precisión}: de los pacientes señalados como fallecimiento, proporción que
+      efectivamente falleció.
+\item \textbf{Recall}: de los pacientes que fallecieron, proporción que el modelo señaló.
+\item \textbf{F1}: media armónica entre precisión y recall.
+\end{itemize}
+
+La distinción entre precisión y recall resulta central en este problema. La primera cuantifica el
+costo de las falsas alarmas; la segunda, el de los casos no detectados. En un contexto clínico
+ambos errores tienen consecuencias distintas, por lo que resumirlos en un único valor oculta
+información relevante para la decisión.
+
+%============================================================================
+\section{Resultados sobre el conjunto de prueba}
+%============================================================================
+
+La Tabla \ref{tab:metricas} presenta el desempeño de los cuatro modelos.
+
+\input{tablas/metricas.tex}
+
+La regresión logística obtiene el mayor valor en AUC, exactitud, recall y F1. El árbol de decisión
+se sitúa en segundo lugar y el método de vecinos en tercero.
+
+Tres observaciones merecen atención.
+
+La primera concierne a la referencia trivial. Su exactitud de 0.741 supera en apenas ocho
+centésimas a la del método de vecinos, pese a que este último procesa cuarenta variables. Su AUC,
+en cambio, es 0.500 frente a 0.835: la diferencia entre ambos modelos resulta evidente en una
+métrica y casi imperceptible en la otra.
+
+La segunda se refiere al recall. Ningún modelo supera 0.52. El mejor de ellos identifica
+aproximadamente la mitad de los pacientes que fallecen, cuestión que se analiza en la
+Sección \ref{sec:recall}.
+
+La tercera corresponde al método de vecinos, cuya precisión de 0.721 supera a la del árbol
+mientras su recall es notablemente inferior. El modelo emite menos señalamientos y acierta en una
+proporción mayor de ellos, a costa de omitir más casos.
+
+\subsection{Curvas ROC}
+
+La Figura \ref{fig:roc} presenta las curvas ROC de los tres clasificadores. Cada punto de la curva
+corresponde a un umbral de decisión distinto, de modo que la representación describe el
+comportamiento del modelo en todo el rango de umbrales y no únicamente en el valor predeterminado.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\textwidth]{roc.png}
+\caption{Curvas ROC sobre el conjunto de prueba. La diagonal corresponde a un clasificador
+aleatorio.}
+\label{fig:roc}
+\end{figure}
+
+La curva de la regresión logística domina a las restantes en prácticamente todo el recorrido. Las
+de árbol y vecinos se entrecruzan, lo que anticipa el resultado de las pruebas de significancia
+presentadas más adelante.
+
+%============================================================================
+\section{Matrices de confusión}
+%============================================================================
+
+Las métricas agregadas no indican qué tipo de error comete cada modelo. La Tabla
+\ref{tab:confusion} descompone las clasificaciones en sus cuatro categorías.
+
+\input{tablas/confusion.tex}
+
+La columna de falsos negativos resulta la más relevante: corresponde a pacientes que fallecieron y
+que el modelo no señaló. La regresión logística registra 227 casos, el árbol 261 y el método de
+vecinos 304, sobre un total de 472 fallecimientos en el conjunto de prueba.
+
+La comparación entre el árbol y el método de vecinos ilustra la naturaleza del compromiso. Este
+último produce menos falsas alarmas, 65 frente a 90, pero omite 43 fallecimientos adicionales. Es
+un modelo más conservador en sus señalamientos, propiedad que puede resultar deseable o no según
+el costo relativo que se asigne a cada tipo de error.
+
+%============================================================================
+\section{Estabilidad de los resultados}
+%============================================================================
+
+Los valores presentados hasta aquí provienen de una única partición entre entrenamiento y prueba.
+Una partición distinta produciría valores distintos, y conviene determinar la magnitud de esa
+variación antes de atribuir significado a las diferencias observadas.
+
+Para estimarla se aplicó validación cruzada estratificada de diez particiones sobre el conjunto de
+entrenamiento. El procedimiento entrena y evalúa diez veces, de modo que proporciona una
+distribución de valores en lugar de un único resultado.
+
+\input{tablas/particiones.tex}
+
+La regresión logística obtiene el mayor AUC en las diez particiones, sin excepción. Las
+desviaciones son del orden de dos centésimas en los tres modelos, magnitud comparable a la
+diferencia entre el árbol y el método de vecinos, lo que impide distinguirlos a partir de estos
+valores.
+
+Los promedios de la validación cruzada resultan inferiores a los obtenidos sobre el conjunto de
+prueba. La diferencia es esperable: cada partición entrena con el 90\% de los registros de
+entrenamiento, mientras que el modelo final dispone de su totalidad.
+
+%============================================================================
+\section{Pruebas de significancia estadística}
+%============================================================================
+
+\subsection{Fundamento}
+
+Las diferencias observadas entre modelos podrían originarse en el azar de la partición. Determinar
+si corresponden a diferencias reales requiere pruebas estadísticas.
+
+Se emplearon pruebas no paramétricas, que no presuponen que las métricas sigan una distribución
+normal. En lugar de comparar promedios, comparan rangos —qué modelo quedó primero, segundo y
+tercero en cada medición— y signos —cuántas veces uno superó a otro—. Con diez mediciones, la
+hipótesis de normalidad no resulta verificable, de modo que esta familia de pruebas es la
+apropiada.
+
+El procedimiento consta de dos partes, aplicadas sobre conjuntos distintos.
+
+\subsection{Friedman y Wilcoxon sobre validación cruzada}
+
+Los tres modelos se evaluaron sobre las mismas diez particiones, lo que convierte las mediciones
+en pareadas: cada partición constituye una prueba que los tres modelos rindieron en idénticas
+condiciones.
+
+La prueba de Friedman contrasta la hipótesis de que los tres modelos presentan el mismo
+desempeño. Su resultado fue $\chi^2 = 15.000$ con $p = 0.0006$, de modo que la hipótesis se
+rechaza: existen diferencias entre los modelos.
+
+Establecida la existencia de diferencias, la prueba de Wilcoxon de rangos con signo determina
+entre qué pares se verifican. El orden importa: aplicar comparaciones por pares sin contrastar
+previamente la hipótesis global incrementa la probabilidad de detectar diferencias inexistentes.
+
+Dado que se realizan tres comparaciones, los valores $p$ se multiplican por tres conforme a la
+corrección de Bonferroni. Cuantas más comparaciones se efectúan, mayor es la probabilidad de que
+alguna resulte significativa por azar, y la corrección compensa ese efecto.
+
+\subsection{McNemar sobre el conjunto de prueba}
+
+Las diez particiones comparten registros de entrenamiento entre sí, por lo que no son
+estrictamente independientes y sus valores $p$ resultan optimistas. Esta limitación motiva una
+segunda prueba sobre datos que ningún modelo utilizó.
+
+La prueba de McNemar compara dos clasificadores paciente por paciente sobre el conjunto de prueba.
+Considera únicamente los casos en que ambos modelos difieren: aquellos en que uno acierta y el
+otro falla. Bajo la hipótesis de equivalencia, esos casos deberían repartirse por igual entre
+ambos modelos. Se empleó la versión exacta, basada en la distribución binomial.
+
+\subsection{Resultados}
+
+La Tabla \ref{tab:pruebas} presenta ambas pruebas para los tres pares de modelos.
+
+\input{tablas/pruebas.tex}
+
+Los dos procedimientos coinciden. La regresión logística difiere significativamente del árbol de
+decisión y del método de vecinos, tanto en validación cruzada como sobre el conjunto de prueba.
+El árbol y el método de vecinos, en cambio, no presentan diferencias significativas por ninguno de
+los dos procedimientos: $p = 1.0000$ en Wilcoxon y $p = 0.7485$ en McNemar.
+
+Este último resultado constituye el principal hallazgo de la evaluación. El árbol obtiene un AUC
+de 0.847 frente a 0.835 del método de vecinos, diferencia que la tabla de resultados presenta como
+una ventaja. Las pruebas indican que dicha ventaja no se distingue del azar: sobre el conjunto de
+prueba, 118 pacientes fueron clasificados correctamente sólo por el árbol y 100 sólo por el método
+de vecinos, reparto compatible con la equivalencia entre ambos.
+
+Corresponde señalar una particularidad de los valores obtenidos. Las dos comparaciones que
+involucran a la regresión logística arrojan exactamente $p = 0.0059$ en la prueba de Wilcoxon. No
+se trata de una coincidencia: con diez mediciones, el menor valor que la prueba puede producir es
+$2/2^{10} = 0.00195$, que multiplicado por tres conforme a la corrección de Bonferroni resulta en
+0.0059. Ambas comparaciones alcanzaron el mínimo posible, lo que equivale a afirmar que la
+regresión logística superó a los otros dos modelos en la totalidad de las particiones.
+
+%============================================================================
+\section{El problema del recall}
+\label{sec:recall}
+%============================================================================
+
+El mejor modelo identifica el 51.9\% de los pacientes que fallecen. Dado que detectar esos casos
+constituye el propósito del clasificador, el resultado requiere análisis.
+
+La causa reside en el desbalance de clases. Al representar los fallecimientos una cuarta parte de
+los registros, el procedimiento de optimización encuentra ventajoso inclinarse hacia la categoría
+mayoritaria: equivocarse en la clase minoritaria resulta menos costoso en términos del criterio
+que el modelo minimiza.
+
+Una corrección consiste en ponderar las clases de forma inversa a su frecuencia, de modo que los
+errores sobre la clase minoritaria pesen más durante el entrenamiento. La Tabla \ref{tab:balanceo}
+presenta el efecto sobre la regresión logística.
+
+\input{tablas/balanceo.tex}
+
+El recall asciende de 0.519 a 0.790, mientras la precisión desciende de 0.736 a 0.569. El modelo
+pasa a detectar cuatro de cada cinco fallecimientos, pero entre los pacientes que señala la
+proporción de aciertos se reduce.
+
+El AUC permanece en 0.879. El resultado es coherente: la ponderación no modifica el ordenamiento
+de los pacientes por riesgo, que es lo que el AUC mide, sino el umbral a partir del cual ese
+ordenamiento se traduce en una decisión.
+
+La elección entre ambas configuraciones no se resuelve mediante criterios estadísticos. Requiere
+determinar el costo relativo de una falsa alarma frente al de un fallecimiento no detectado,
+cuestión que corresponde al contexto de aplicación y no al modelo.
+
+%============================================================================
+\section{Conclusiones}
+%============================================================================
+
+La evaluación de los tres clasificadores arroja tres resultados.
+
+El primero es que la regresión logística supera a los otros dos modelos, y que dicha superioridad
+es estadísticamente significativa. Obtiene el mayor AUC en las diez particiones de validación
+cruzada, y las pruebas de Wilcoxon y McNemar confirman la diferencia por ambos procedimientos.
+
+El segundo es que el árbol de decisión y el método de vecinos no se distinguen entre sí. La
+diferencia de doce milésimas de AUC que exhibe la tabla de resultados no sobrevive a las pruebas
+de significancia. Presentarlos como modelos de desempeño diferente carecería de respaldo.
+
+El tercero concierne al recall. Ningún modelo en su configuración predeterminada supera el 52\% de
+detección sobre la clase de interés. La ponderación de clases eleva ese valor al 79\% a costa de
+la precisión, compromiso cuya resolución depende del costo asignado a cada tipo de error.
+
+La evaluación permite asimismo precisar el valor de cada métrica en este problema. La exactitud
+resulta insuficiente, dado que un modelo que no aprende alcanza 0.741. El AUC describe
+adecuadamente la capacidad de ordenamiento pero no informa sobre el comportamiento en el umbral de
+decisión. La matriz de confusión y el par precisión–recall son los que permiten determinar qué
+tipo de error comete cada modelo, que es la información necesaria para decidir cuál emplear.
+
+\printbibliography[title={Referencias}]
+
+\end{document}
