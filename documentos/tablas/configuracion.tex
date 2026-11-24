@@ -1,0 +1,16 @@
+\begin{table}[H]
+\centering
+\caption{Configuración de los modelos evaluados}
+\label{tab:configuracion}
+\small
+\begin{tabular}{p{3.6cm} p{5.4cm} p{1.6cm}}
+\toprule
+\textbf{Modelo} & \textbf{Parámetros} & \textbf{Escalado} \\
+\midrule
+Regresión logística & Penalización L2, hasta 3000 iteraciones & Sí \\
+Árbol de decisión & Profundidad máxima 5, criterio Gini & No \\
+Vecinos más cercanos & 25 vecinos, distancia euclidiana & Sí \\
+Referencia trivial & Predice siempre la clase mayoritaria & No \\
+\bottomrule
+\end{tabular}
+\end{table}

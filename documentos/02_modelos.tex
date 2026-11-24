@@ -1,0 +1,310 @@
+\documentclass[11pt]{article}
+\usepackage{preambulo}
+\addbibresource{bibliografia.bib}
+
+\begin{document}
+
+\portada{Modelos de aprendizaje automático}
+
+\tableofcontents
+\newpage
+
+%============================================================================
+\section{Planteamiento del problema de aprendizaje}
+%============================================================================
+
+El presente documento describe los modelos de aprendizaje automático aplicados al conjunto de
+datos SUPPORT2 \parencite{support2}, cuyo preprocesamiento se documentó previamente. El objetivo
+consiste en predecir la variable \texttt{hospdead}, que indica si un paciente fallece durante la
+hospitalización analizada.
+
+La variable objetivo admite únicamente dos valores y se encuentra registrada para la totalidad de
+los casos. El problema corresponde por tanto a una tarea de \textbf{clasificación binaria
+supervisada}: a cada paciente debe asignársele una de dos categorías, y el aprendizaje se realiza
+a partir de ejemplos cuya categoría es conocida.
+
+El conjunto empleado está conformado por 7{,}284 registros de entrenamiento y 1{,}821 de prueba,
+con 40 variables de entrada y la variable objetivo. Todas las variables son numéricas y no
+contienen valores ausentes, condición establecida durante el preprocesamiento.
+
+Una característica del conjunto condiciona la interpretación de los resultados: las clases están
+desbalanceadas. Los fallecimientos representan el 25.9\% de los registros, de modo que un
+clasificador que asignara siempre la categoría mayoritaria acertaría en el 74.1\% de los casos sin
+utilizar información alguna.
+
+%============================================================================
+\section{Criterio de selección de los modelos}
+%============================================================================
+
+Se evaluaron tres clasificadores en lugar de uno solo. La razón es que el desempeño de un modelo
+aislado no permite distinguir entre dos situaciones distintas: que el algoritmo sea adecuado para
+el problema, o que la señal predictiva esté presente en los datos con independencia del algoritmo.
+Comparar modelos que deciden mediante mecanismos diferentes permite separar ambos efectos.
+
+Los tres seleccionados responden a mecanismos de decisión distintos entre sí:
+
+\begin{itemize}
+\item La \textbf{regresión logística} construye una frontera lineal: pondera cada variable y
+      combina las ponderaciones en una única puntuación.
+\item El \textbf{árbol de decisión} construye reglas: formula preguntas encadenadas sobre una
+      variable por vez.
+\item El método de \textbf{vecinos más cercanos} no construye regla alguna: clasifica cada caso
+      según los registros que más se le parecen.
+\end{itemize}
+
+Se incorporó además un cuarto modelo de referencia, que no aprende de los datos y predice siempre
+la clase mayoritaria. Su función se detalla en la Sección \ref{sec:referencia}.
+
+La Tabla \ref{tab:configuracion} resume la configuración de los cuatro.
+
+\input{tablas/configuracion.tex}
+
+%============================================================================
+\section{Regresión logística}
+%============================================================================
+
+\subsection{Mecanismo de decisión}
+
+La regresión logística asigna un coeficiente a cada variable de entrada, calcula la suma ponderada
+de los valores del paciente y transforma dicha suma en una probabilidad mediante la función
+logística:
+
+\[
+P(\text{fallece}) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 x_1 + \cdots + \beta_n x_n)}}
+\]
+
+El resultado se interpreta directamente como probabilidad de fallecimiento. Un coeficiente
+positivo indica que valores mayores de esa variable incrementan el riesgo estimado; uno negativo,
+que lo reducen.
+
+\subsection{Configuración}
+
+Se empleó la penalización L2, que limita la magnitud de los coeficientes y previene que el modelo
+asigne un peso desproporcionado a una variable concreta. El número máximo de iteraciones se fijó
+en 3000 para asegurar la convergencia del procedimiento de optimización.
+
+La estandarización de las variables resulta necesaria en este caso, y el motivo es precisamente la
+penalización. Al castigar los coeficientes de mayor magnitud, una variable medida en unidades
+pequeñas requeriría un coeficiente elevado para ejercer el mismo efecto, y la penalización la
+afectaría de manera desproporcionada respecto de las demás.
+
+\subsection{Variables de mayor peso}
+
+La Figura \ref{fig:coeficientes} presenta los coeficientes de mayor magnitud obtenidos sobre las
+variables estandarizadas. La estandarización permite compararlos entre sí, dado que todos operan
+sobre la misma escala.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{coeficientes.png}
+\caption{Coeficientes de mayor magnitud de la regresión logística. En rojo los que incrementan el
+riesgo estimado, en azul los que lo reducen.}
+\label{fig:coeficientes}
+\end{figure}
+
+Los dos coeficientes de mayor peso corresponden a \texttt{sps} y \texttt{aps}, los puntajes de
+fisiología medidos al tercer día, seguidos por el indicador de coma y el puntaje \texttt{scoma}.
+El modelo concede por tanto el mayor peso a las mediciones de gravedad clínica, resultado
+coherente con el fenómeno que se pretende predecir.
+
+Entre los coeficientes negativos figuran varios indicadores de grupo diagnóstico, en particular
+insuficiencia cardíaca congestiva, cáncer de colon y enfermedad pulmonar obstructiva crónica. Su
+signo indica que, a igualdad de las restantes variables, pertenecer a esos grupos reduce el riesgo
+estimado de fallecimiento durante la hospitalización respecto de la categoría de referencia.
+
+%============================================================================
+\section{Árbol de decisión}
+%============================================================================
+
+\subsection{Mecanismo de decisión}
+
+El árbol de decisión clasifica mediante preguntas encadenadas sobre una variable por vez. En cada
+nodo selecciona la variable y el umbral que mejor separan las dos clases, evaluados mediante el
+índice de Gini, y repite el procedimiento sobre cada una de las dos ramas resultantes.
+
+A diferencia de la regresión logística, el resultado puede representarse gráficamente y leerse
+como una secuencia de reglas, lo que constituye su principal ventaja en contextos donde la
+decisión debe justificarse.
+
+\subsection{Profundidad}
+
+La profundidad máxima se fijó en cinco niveles. Un árbol sin restricción de profundidad continúa
+dividiendo hasta aislar casos individuales, con lo que reproduce el conjunto de entrenamiento en
+lugar de generalizar. El límite de cinco niveles produce un árbol de 32 hojas, cantidad que
+conserva la posibilidad de inspección.
+
+\subsection{Estructura obtenida}
+
+La Figura \ref{fig:arbol} presenta los dos primeros niveles del árbol entrenado.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{arbol.png}
+\caption{Primeros dos niveles del árbol de decisión. La profundidad completa es de cinco niveles
+y 32 hojas.}
+\label{fig:arbol}
+\end{figure}
+
+La primera división utiliza \texttt{aps} con un umbral de 50.5, y las divisiones subsiguientes
+recurren a \texttt{scoma} y \texttt{sps}. La regla inicial puede enunciarse directamente: los
+pacientes cuyo puntaje de fisiología APACHE III supera 50.5 presentan un riesgo sustancialmente
+mayor.
+
+\subsection{Ausencia de estandarización}
+
+El árbol se entrenó sobre las variables en sus unidades originales, sin estandarizar. La
+estandarización resta la media y divide por la desviación, operación que no altera el orden
+relativo de los valores. Dado que el árbol únicamente compara cada valor contra un umbral,
+selecciona la misma división y produce idénticos resultados sobre datos estandarizados o sin
+estandarizar.
+
+Aplicar la transformación no modificaría el resultado y sugeriría una dependencia que no existe.
+Se omite por ese motivo.
+
+%============================================================================
+\section{Vecinos más cercanos}
+%============================================================================
+
+\subsection{Mecanismo de decisión}
+
+El método de vecinos más cercanos no construye un modelo durante el entrenamiento: almacena los
+registros disponibles. Para clasificar un paciente nuevo, localiza los $k$ registros más próximos
+según la distancia euclidiana y asigna la categoría mayoritaria entre ellos.
+
+\subsection{Necesidad de estandarización}
+
+En este método la estandarización no constituye una mejora sino un requisito. La distancia
+euclidiana agrega las diferencias de todas las variables en un único valor:
+
+\[
+d(a, b) = \sqrt{\sum_{i=1}^{n} (a_i - b_i)^2}
+\]
+
+Sin estandarización, las variables de mayor recorrido dominan la suma. La glucosa abarca un
+intervalo de aproximadamente 318 unidades, mientras que el pH se desplaza entre 7.25 y 7.60: una
+diferencia de 50 unidades de glucosa pesaría miles de veces más que la diferencia máxima
+observable en pH. La proximidad quedaría determinada casi exclusivamente por una variable.
+
+\subsection{Selección del número de vecinos}
+
+El valor de $k$ se determinó mediante validación cruzada sobre el conjunto de entrenamiento,
+evaluando varios valores y comparando el AUC promedio. La Figura \ref{fig:vecinos} presenta el
+resultado.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.78\textwidth]{vecinos.png}
+\caption{AUC promedio en validación cruzada según el número de vecinos.}
+\label{fig:vecinos}
+\end{figure}
+
+El procedimiento se realizó sobre el conjunto de entrenamiento y no sobre el de prueba. Determinar
+un parámetro a partir del conjunto reservado para evaluación invalidaría la evaluación posterior,
+dado que el valor seleccionado habría sido elegido precisamente por su desempeño sobre esos datos.
+
+\subsection{Comportamiento observado}
+
+El AUC aumenta de forma sostenida con el número de vecinos: 0.762 con cinco vecinos, 0.817 con
+veinticinco y 0.833 con doscientos uno. La ausencia de un máximo dentro del intervalo evaluado
+merece interpretación.
+
+El comportamiento es atribuible a la dimensionalidad del conjunto. Con 40 variables de entrada,
+las distancias entre registros tienden a homogeneizarse y la noción de proximidad pierde capacidad
+discriminante. El modelo compensa esa pérdida promediando sobre vecindarios cada vez más amplios,
+procedimiento que se aproxima progresivamente a estimar la proporción global de la clase.
+
+Se adoptó $k = 25$ por constituir un valor intermedio que conserva el carácter local del método.
+La elección implica renunciar a aproximadamente 0.016 puntos de AUC respecto del mejor valor
+evaluado.
+
+%============================================================================
+\section{Modelo de referencia}
+\label{sec:referencia}
+%============================================================================
+
+Se incorporó un cuarto modelo que no utiliza las variables de entrada y predice invariablemente la
+clase mayoritaria. Su propósito no es competir con los anteriores sino establecer el umbral por
+debajo del cual ningún resultado puede considerarse informativo.
+
+Dado el desbalance del conjunto, este modelo alcanza una exactitud de 0.741. Cualquier
+clasificador que no supere ese valor no aporta información, con independencia de que su exactitud
+pueda parecer elevada en términos absolutos. Su inclusión evita interpretar como logro un
+desempeño que se obtiene sin aprender nada.
+
+%============================================================================
+\section{Protocolo de entrenamiento}
+%============================================================================
+
+El entrenamiento se realizó exclusivamente sobre el conjunto de entrenamiento, reservando el de
+prueba para la evaluación documentada en el informe correspondiente.
+
+La comparación entre modelos se efectuó mediante validación cruzada estratificada de cinco
+particiones. El procedimiento divide el conjunto de entrenamiento en cinco bloques que conservan
+la proporción de clases, entrena con cuatro y evalúa sobre el restante, repitiendo la operación
+cinco veces. El promedio resultante es más estable que el obtenido de una partición única.
+
+El escalado se integró como etapa inicial de un flujo conjunto con el modelo, y no como
+transformación previa aplicada a los archivos. La distinción no es formal: dentro de la validación
+cruzada, el escalador debe ajustarse sobre los cuatro bloques de entrenamiento de cada iteración y
+aplicarse al bloque restante. Si se ajustara una sola vez sobre el conjunto completo, cada
+evaluación se realizaría con un escalador que ya incorporó información del bloque evaluado.
+
+La semilla de los procedimientos aleatorios se fijó en 42, de modo que los resultados son
+reproducibles.
+
+La Tabla \ref{tab:resultados} resume el desempeño obtenido sobre el conjunto de prueba. Su
+análisis detallado, junto con las matrices de confusión y las pruebas de significancia
+estadística, se desarrolla en el informe de evaluación.
+
+\input{tablas/resultados.tex}
+
+%============================================================================
+\section{Convergencia de los tres modelos}
+%============================================================================
+
+Los tres clasificadores emplean mecanismos de decisión distintos y, pese a ello, se apoyan en las
+mismas variables.
+
+La regresión logística concede sus mayores coeficientes a \texttt{sps} y \texttt{aps}. El árbol de
+decisión selecciona \texttt{aps} para su primera división y \texttt{scoma} y \texttt{sps} para las
+siguientes. La selección univariada de variables, documentada en el informe de preprocesamiento,
+sitúa a esos mismos tres puntajes entre los más informativos.
+
+La coincidencia resulta relevante porque los tres procedimientos operan bajo criterios
+independientes: uno optimiza coeficientes de una combinación lineal, otro maximiza la separación
+de clases en divisiones sucesivas, y el tercero evalúa la asociación individual de cada variable
+con el objetivo. Que converjan en los mismos puntajes de severidad indica que la señal predictiva
+reside en los datos y no en la elección del algoritmo.
+
+El resultado es además coherente desde la perspectiva clínica: \texttt{aps}, \texttt{sps} y
+\texttt{scoma} son precisamente los índices construidos para cuantificar la gravedad del paciente.
+
+%============================================================================
+\section{Conclusiones}
+%============================================================================
+
+Se entrenaron tres clasificadores con mecanismos de decisión diferentes sobre el conjunto
+preprocesado, acompañados de un modelo de referencia que establece el umbral mínimo de
+desempeño informativo.
+
+La regresión logística obtuvo el mayor AUC, con 0.879. El árbol de decisión alcanzó 0.847 y el
+método de vecinos más cercanos 0.835. Los tres superan la referencia trivial, cuyo AUC es 0.500 y
+cuya exactitud de 0.741 ilustra por qué esta última métrica resulta insuficiente en conjuntos
+desbalanceados.
+
+Cada modelo presenta un perfil distinto. La regresión logística combina el mejor desempeño con la
+posibilidad de examinar el peso asignado a cada variable. El árbol admite una lectura directa como
+secuencia de reglas, a costa de aproximadamente tres centésimas de AUC. El método de vecinos
+resulta el menos apropiado para este conjunto, no por configuración deficiente sino porque la
+dimensionalidad degrada la noción de proximidad en que se sustenta.
+
+La convergencia de los tres en los mismos puntajes de severidad constituye el hallazgo de mayor
+relevancia: indica que el desempeño obtenido proviene de la información contenida en los datos y
+no de la elección del procedimiento.
+
+La determinación de si las diferencias observadas entre los tres modelos son estadísticamente
+significativas requiere pruebas específicas, que se desarrollan en el informe de evaluación.
+
+\printbibliography[title={Referencias}]
+
+\end{document}
