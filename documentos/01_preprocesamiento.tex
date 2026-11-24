@@ -65,6 +65,13 @@ decisiones que condicionan la validez del resultado.}
 \label{fig:flujo}
 \end{figure}
 
+Las cifras, tablas y figuras que contiene este documento se obtienen por ejecución directa del
+procedimiento sobre el conjunto de datos. Las tablas de verificación que acompañan a las
+decisiones —la comparación de desempeño con y sin determinadas columnas, la evaluación de métodos
+de reducción y el contraste entre órdenes de operación— no modifican los datos y no integran el
+procedimiento, pero se calculan mediante el mismo script que genera el resto del material, de modo
+que todo el documento es reproducible a partir del repositorio.
+
 La organización del presente documento sigue las tres dimensiones solicitadas: limpieza
 (Sección \ref{sec:limpieza}), transformación (Sección \ref{sec:transformacion}) y reducción de la
 dimensionalidad (Sección \ref{sec:reduccion}). No obstante, dado que la selección de variables
@@ -259,9 +266,7 @@ registra. Conviene sin embargo comprobar que la decisión tiene consecuencias re
 resultado, y no sólo fundamento conceptual.
 
 Para ello se entrenó una regresión logística bajo dos configuraciones idénticas en todo excepto
-en la presencia de las seis columnas posteriores al ingreso. Esta comprobación no forma parte del
-procedimiento de preprocesamiento: es una verificación realizada una sola vez para sustentar la
-decisión.
+en la presencia de las seis columnas posteriores al ingreso.
 
 \input{tablas/fuga.tex}
 
@@ -445,8 +450,8 @@ reducción habría funcionado mejor. La alternativa más directa consiste en con
 tal como están y quedarse sólo con las más informativas, medidas por su relación individual con la
 variable objetivo.
 
-La comparación que sigue tampoco forma parte del preprocesamiento. Se realizó para decidir si
-convenía reducir, y el resultado fue que no hacía falta.
+La comparación que sigue se realizó para decidir si convenía reducir, y el resultado fue que no
+hacía falta.
 
 \input{tablas/reduccion.tex}
 
@@ -505,8 +510,8 @@ completan con la mediana, buena parte de los registros pasa a compartir ese mism
 cuartiles se juntan alrededor del centro, el rango intercuartílico casi desaparece y los límites
 que de él se derivan quedan tan estrechos que ya no describen la escala real de la variable.
 
-La siguiente comparación se calculó para comprobarlo. Tampoco forma parte del procedimiento: los
-límites de la columna derecha corresponden a lo que habría ocurrido con el orden inverso.
+La siguiente comparación lo verifica. Los límites de la columna derecha corresponden a lo que
+habría ocurrido con el orden inverso.
 
 \input{tablas/orden-ric.tex}
 
