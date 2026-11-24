@@ -77,20 +77,22 @@ Sección \ref{sec:fuga}.
 %============================================================================
 
 El conjunto de datos SUPPORT2 proviene del estudio \textit{Study to Understand Prognoses and
-Preferences for Outcomes and Risks of Treatments}, desarrollado en cinco hospitales de los Estados
-Unidos con el propósito de caracterizar el pronóstico de pacientes hospitalizados con
-enfermedades graves. El archivo original está conformado por 9{,}105 registros y 45 columnas,
-donde cada registro corresponde a un paciente hospitalizado.
+Preferences for Outcomes and Risks of Treatments} \parencite{support2}, cuyo propósito fue
+caracterizar el pronóstico de pacientes hospitalizados con enfermedades graves. El archivo
+original está conformado por 9{,}105 registros y 45 columnas, donde cada registro corresponde a
+un paciente hospitalizado.
 
 Los pacientes se distribuyen en ocho grupos diagnósticos: insuficiencia respiratoria aguda con
 sepsis, insuficiencia cardíaca congestiva, enfermedad pulmonar obstructiva crónica, cirrosis,
 cáncer de colon, cáncer de pulmón, coma y fallo multiorgánico con neoplasia.
 
-Las variables disponibles pueden agruparse en cinco categorías: datos demográficos y de contexto
-social, información diagnóstica, puntajes de severidad clínica medidos al tercer día del estudio,
-signos vitales y resultados de laboratorio, e indicadores de funcionalidad en actividades de la
-vida diaria. La Tabla \ref{tab:variables} presenta la totalidad de las variables con el rol que les
-asigna la ficha oficial del repositorio, su descripción, tipo y proporción de valores ausentes.
+La ficha oficial del repositorio asigna a cada variable un rol: cuarenta y dos figuran como
+variables de entrada, tres como variables objetivo y dos como información auxiliar no utilizable
+para predicción. Por su contenido, las variables de entrada corresponden a datos demográficos y
+de contexto social, información diagnóstica, puntajes de severidad medidos al tercer día del
+estudio, signos vitales y resultados de laboratorio, e indicadores de funcionalidad en
+actividades de la vida diaria. La Tabla \ref{tab:variables} presenta la totalidad de las
+variables con su rol, descripción, tipo y proporción de valores ausentes.
 
 \input{tablas/variables.tex}
 
@@ -190,8 +192,8 @@ valor definitivo sólo se conoce una vez concluido el episodio.
 Las variables \texttt{charges}, \texttt{totcst} y \texttt{totmcst} corresponden al cobro y al
 costo total de la hospitalización. Estas cifras se consolidan al momento del alta, de modo que no
 se encuentran disponibles mientras el paciente permanece internado. La diferencia observada entre
-grupos resulta considerable: el cobro promedio asciende a 92{,}638 unidades monetarias entre los
-pacientes fallecidos frente a 48{,}683 entre los sobrevivientes, diferencia atribuible a la
+grupos resulta considerable: el cobro promedio asciende a 92{,}639 unidades monetarias entre los
+pacientes fallecidos frente a 48{,}684 entre los sobrevivientes, diferencia atribuible a la
 duración y la intensidad del episodio.
 
 La variable \texttt{avtisst} corresponde al promedio del puntaje de intervenciones terapéuticas
@@ -245,8 +247,16 @@ información y, adicionalmente, imputar el 31\% de valores ausentes que presenta
 original. Se conservó \texttt{adlsc}.
 
 Se evaluó asimismo la relación entre \texttt{sps} y \texttt{aps}, ambos puntajes de severidad
-medidos al tercer día. La correlación observada resultó elevada pero inferior a la unidad, por lo
-que no constituyen mediciones equivalentes y ambas fueron conservadas.
+medidos al tercer día. La correlación observada fue de 0.798: elevada, pero suficientemente
+inferior a la unidad como para descartar que se trate de mediciones equivalentes. Ambas fueron
+conservadas.
+
+Cabe señalar que la ficha oficial describe tanto \texttt{scoma} como \texttt{sps} con la
+expresión \textit{predicted by a model}, al igual que las estimaciones de supervivencia
+excluidas en la Sección \ref{sec:fuga}. La diferencia que justifica conservarlas reside en el
+objeto de la estimación: \texttt{scoma} y \texttt{sps} cuantifican la gravedad del paciente al
+tercer día a partir de mediciones clínicas, mientras que \texttt{surv2m} y \texttt{surv6m}
+estiman directamente el desenlace que se pretende predecir.
 
 \subsection{Resumen de las exclusiones}
 
@@ -277,10 +287,22 @@ Sin las variables posteriores al ingreso & 41 & 0.879 \\
 \end{tabular}
 \end{table}
 
-La diferencia observada resulta determinante para la interpretación del resultado. Un área bajo la
-curva de 0.948 en la predicción de mortalidad hospitalaria excede el desempeño reportado para los
-modelos publicados sobre este mismo conjunto de datos, los cuales se sitúan entre 0.80 y 0.86. El
-valor de 0.879 obtenido tras la exclusión se encuentra en cambio dentro del rango esperable.
+Para dimensionar la magnitud de estos valores se requiere un punto de comparación obtenido sobre
+los mismos datos. El conjunto incluye las estimaciones producidas por el modelo pronóstico del
+propio estudio SUPPORT y por el médico tratante, que pueden evaluarse directamente frente a
+\texttt{hospdead}. La Tabla \ref{tab:referencia} presenta su capacidad discriminante.
+
+\input{tablas/referencia.tex}
+
+El modelo pronóstico del estudio alcanza un AUC de 0.841 y la estimación del médico tratante
+0.814. El valor de 0.879 obtenido tras excluir las variables posteriores al ingreso se sitúa en
+ese mismo orden de magnitud, resultado esperable para un modelo construido sobre información
+clínica de base.
+
+El valor de 0.948, en cambio, supera en más de diez puntos tanto al modelo del estudio como al
+juicio del especialista. Un clasificador entrenado únicamente con mediciones clínicas no debería
+superar de ese modo a quienes disponen de la evolución completa del paciente, lo que constituye
+un indicio de que el desempeño no proviene de la información clínica.
 
 La reducción del desempeño no debe interpretarse por tanto como una pérdida de capacidad
 predictiva, sino como la eliminación de una ventaja ilegítima: el modelo inicial no predecía el

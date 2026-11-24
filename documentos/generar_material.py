@@ -157,6 +157,36 @@ def tabla_variables(crudo, ficha):
         "\\end{longtable}\n", encoding="utf-8")
 
 
+def tabla_referencia(crudo):
+    """Tabla con el AUC de las estimaciones del propio estudio frente al objetivo."""
+    from sklearn.metrics import roc_auc_score
+
+    etiquetas = {
+        "surv2m": "Modelo SUPPORT, supervivencia a 2 meses",
+        "surv6m": "Modelo SUPPORT, supervivencia a 6 meses",
+        "prg2m": "Estimación del médico, 2 meses",
+        "prg6m": "Estimación del médico, 6 meses",
+    }
+    filas = []
+    for columna, etiqueta in etiquetas.items():
+        sub = crudo[[columna, config.OBJETIVO]].dropna()
+        # Son probabilidades de supervivencia: se invierte el signo para predecir muerte.
+        auc = roc_auc_score(sub[config.OBJETIVO], -sub[columna])
+        filas.append((etiqueta, len(sub), f"{auc:.3f}"))
+
+    cuerpo = "\n".join(f"{e} & {n} & {a} \\\\" for e, n, a in filas)
+    (TABLAS / "referencia.tex").write_text(
+        "\\begin{table}[H]\n\\centering\n"
+        "\\caption{Capacidad discriminante de las estimaciones incluidas en el propio conjunto "
+        "de datos, evaluadas frente a \\texttt{hospdead}}\n"
+        "\\label{tab:referencia}\n\\small\n"
+        "\\begin{tabular}{p{6.4cm} r r}\n\\toprule\n"
+        "\\textbf{Estimación} & \\textbf{Casos} & \\textbf{AUC} \\\\\n\\midrule\n"
+        f"{cuerpo}\n"
+        "\\bottomrule\n\\end{tabular}\n\\end{table}\n", encoding="utf-8")
+    return filas
+
+
 def tabla_exclusiones():
     """Tabla de las columnas excluidas con el motivo de cada una."""
     motivos = config.motivos_exclusion()
@@ -183,11 +213,15 @@ def main():
     figura_clases(entrenamiento)
     tabla_variables(crudo, ficha)
     tabla_exclusiones()
+    referencia = tabla_referencia(crudo)
 
     print(f"Variables en el csv original: {crudo.shape[1]}")
     print(f"Variables verificadas contra la ficha oficial: {crudo.columns.isin(ficha.index).sum()}")
     print(f"Columnas excluidas: {len(config.motivos_exclusion())}")
-    print("Generado: figuras/clases.png, tablas/variables.tex, tablas/exclusiones.tex")
+    print("AUC de las estimaciones del propio estudio frente a hospdead:")
+    for etiqueta, casos, auc in referencia:
+        print(f"  {etiqueta}: {auc} (n={casos})")
+    print("Generado: figuras/clases.png y las tablas en tablas/")
 
 
 if __name__ == "__main__":
