@@ -1,59 +1,59 @@
-\begin{longtable}{p{1.9cm} p{5.4cm} p{1.9cm} r}
-\caption{Variables del conjunto de datos original}
+\begin{longtable}{p{1.7cm} p{5.1cm} p{1.4cm} p{1.6cm} r}
+\caption{Variables del conjunto de datos original. Descripciones tomadas de la ficha oficial del repositorio UCI.}
 \label{tab:variables}\\
 \toprule
-\textbf{Variable} & \textbf{Descripción} & \textbf{Tipo} & \textbf{\% nulos} \\
+\textbf{Variable} & \textbf{Descripción} & \textbf{Rol} & \textbf{Tipo} & \textbf{\% nulos} \\
 \midrule
 \endfirsthead
 \toprule
-\textbf{Variable} & \textbf{Descripción} & \textbf{Tipo} & \textbf{\% nulos} \\
+\textbf{Variable} & \textbf{Descripción} & \textbf{Rol} & \textbf{Tipo} & \textbf{\% nulos} \\
 \midrule
 \endhead
 \bottomrule
 \endfoot
-age & Edad en anos & Numérica & 0.0 \\
-sex & Sexo & Binaria & 0.0 \\
-dzgroup & Grupo de enfermedad & Numérica & 0.0 \\
-dzclass & Categoria amplia de enfermedad & Numérica & 0.0 \\
-num\_co & Numero de comorbilidades & Numérica & 0.0 \\
-edu & Anos de educacion & Numérica & 17.9 \\
-income & Ingreso anual declarado & Numérica & 32.8 \\
-scoma & Puntaje de coma al dia 3 & Numérica & 0.0 \\
-charges & Cobro total de la hospitalizacion & Numérica & 1.9 \\
-totcst & Costo total estimado & Numérica & 9.8 \\
-totmcst & Costo total detallado & Numérica & 38.2 \\
-avtisst & Promedio de intervenciones, dias 3 a 25 & Numérica & 0.9 \\
-race & Raza & Numérica & 0.5 \\
-sps & Puntaje de fisiologia SUPPORT & Numérica & 0.0 \\
-aps & Puntaje de fisiologia APACHE III & Numérica & 0.0 \\
-surv2m & Supervivencia a 2 meses estimada por el modelo & Numérica & 0.0 \\
-surv6m & Supervivencia a 6 meses estimada por el modelo & Numérica & 0.0 \\
-hday & Dia de internacion al entrar al estudio & Numérica & 0.0 \\
-diabetes & Presencia de diabetes & Binaria & 0.0 \\
-dementia & Presencia de demencia & Binaria & 0.0 \\
-ca & Estado del cancer & Numérica & 0.0 \\
-prg2m & Supervivencia a 2 meses estimada por el medico & Numérica & 18.1 \\
-prg6m & Supervivencia a 6 meses estimada por el medico & Numérica & 17.9 \\
-dnr & Orden de no reanimar & Numérica & 0.3 \\
-dnrday & Dia de la orden de no reanimar & Numérica & 0.3 \\
-meanbp & Presion arterial media & Numérica & 0.0 \\
-wblc & Glóbulos blancos & Numérica & 2.3 \\
-hrt & Frecuencia cardiaca & Numérica & 0.0 \\
-resp & Frecuencia respiratoria & Numérica & 0.0 \\
-temp & Temperatura corporal & Numérica & 0.0 \\
-pafi & Relacion PaO2/FiO2 & Numérica & 25.5 \\
-alb & Albumina en sangre & Numérica & 37.0 \\
-bili & Bilirrubina & Numérica & 28.6 \\
-crea & Creatinina & Numérica & 0.7 \\
-sod & Sodio & Numérica & 0.0 \\
-ph & pH arterial & Numérica & 25.1 \\
-glucose & Glucosa & Numérica & 49.4 \\
-bun & Urea en sangre & Numérica & 47.8 \\
-urine & Volumen de orina & Numérica & 53.4 \\
-adlp & Actividades diarias segun el paciente & Numérica & 62.0 \\
-adls & Actividades diarias segun un familiar & Numérica & 31.5 \\
-adlsc & Actividades diarias, version imputada & Numérica & 0.0 \\
-death & Fallecimiento en el seguimiento & Binaria & 0.0 \\
-hospdead & Fallecimiento durante la hospitalizacion & Binaria & 0.0 \\
-sfdm2 & Nivel de discapacidad a los dos meses & Numérica & 15.4 \\
+age & Edad del paciente en años & Entrada & Numérica & 0.0 \\
+sex & Sexo del paciente & Entrada & Binaria & 0.0 \\
+dzgroup & Subcategoría de enfermedad del paciente & Entrada & Numérica & 0.0 \\
+dzclass & Categoría de enfermedad del paciente & Entrada & Numérica & 0.0 \\
+num\_co & Número de enfermedades simultáneas o comorbilidades & Entrada & Numérica & 0.0 \\
+edu & Años de educación & Entrada & Numérica & 17.9 \\
+income & Ingreso del paciente & Entrada & Numérica & 32.8 \\
+scoma & Puntaje de coma SUPPORT al día 3, basado en la escala de Glasgow (estimado por un modelo) & Entrada & Numérica & 0.0 \\
+charges & Cobro hospitalario & Entrada & Numérica & 1.9 \\
+totcst & Costo total según la razón costo-cobro (RCC) & Entrada & Numérica & 9.8 \\
+totmcst & Costo total por micro-costeo & Entrada & Numérica & 38.2 \\
+avtisst & Puntaje TISS promedio de los días 3 al 25, método de costeo de intervenciones terapéuticas & Entrada & Numérica & 0.9 \\
+race & Raza del paciente & Entrada & Numérica & 0.5 \\
+sps & Puntaje de fisiología SUPPORT al día 3 (estimado por un modelo) & Entrada & Numérica & 0.0 \\
+aps & Puntaje de fisiología APACHE III al día 3 & Entrada & Numérica & 0.0 \\
+surv2m & Estimación de supervivencia a 2 meses del modelo SUPPORT al día 3 & Entrada & Numérica & 0.0 \\
+surv6m & Estimación de supervivencia a 6 meses del modelo SUPPORT al día 3 & Entrada & Numérica & 0.0 \\
+hday & Día de hospitalización en que el paciente ingresó al estudio & Entrada & Numérica & 0.0 \\
+diabetes & Presencia de diabetes como comorbilidad & Entrada & Binaria & 0.0 \\
+dementia & Presencia de demencia como comorbilidad & Entrada & Binaria & 0.0 \\
+ca & Presencia de cáncer: sí, metastásico o no & Entrada & Numérica & 0.0 \\
+prg2m & Estimación del médico sobre la supervivencia a 2 meses & Entrada & Numérica & 18.1 \\
+prg6m & Estimación del médico sobre la supervivencia a 6 meses & Entrada & Numérica & 17.9 \\
+dnr & Existencia de orden de no reanimar & Entrada & Numérica & 0.3 \\
+dnrday & Día de la orden de no reanimar; negativo si es previa al estudio & Entrada & Numérica & 0.3 \\
+meanbp & Presión arterial media, medida al día 3 & Entrada & Numérica & 0.0 \\
+wblc & Recuento de glóbulos blancos en miles, medido al día 3 & Entrada & Numérica & 2.3 \\
+hrt & Frecuencia cardíaca, medida al día 3 & Entrada & Numérica & 0.0 \\
+resp & Frecuencia respiratoria, medida al día 3 & Entrada & Numérica & 0.0 \\
+temp & Temperatura en grados Celsius, medida al día 3 & Entrada & Numérica & 0.0 \\
+pafi & Razón PaO$_2$/FiO$_2$, medida al día 3 & Entrada & Numérica & 25.5 \\
+alb & Albúmina sérica, medida al día 3 & Entrada & Numérica & 37.0 \\
+bili & Bilirrubina, medida al día 3 & Entrada & Numérica & 28.6 \\
+crea & Creatinina sérica, medida al día 3 & Entrada & Numérica & 0.7 \\
+sod & Concentración sérica de sodio, medida al día 3 & Entrada & Numérica & 0.0 \\
+ph & pH de la sangre arterial & Entrada & Numérica & 25.1 \\
+glucose & Glucosa, medida al día 3 & Entrada & Numérica & 49.4 \\
+bun & Nitrógeno ureico en sangre, medido al día 3 & Entrada & Numérica & 47.8 \\
+urine & Volumen de orina, medido al día 3 & Entrada & Numérica & 53.4 \\
+adlp & Índice de actividades de la vida diaria, respondido por el paciente & Entrada & Numérica & 62.0 \\
+adls & Índice de actividades de la vida diaria, respondido por un allegado & Entrada & Numérica & 31.5 \\
+adlsc & Índice de actividades de la vida diaria imputado y calibrado al allegado & Entrada & Numérica & 0.0 \\
+death & Fallecimiento en cualquier momento hasta el registro del National Death Index al 31 de diciembre de 1994 & Objetivo & Binaria & 0.0 \\
+hospdead & Fallecimiento durante la hospitalización & Objetivo & Binaria & 0.0 \\
+sfdm2 & Nivel de discapacidad funcional en escala de 1 a 5 & Objetivo & Numérica & 15.4 \\
 \end{longtable}
