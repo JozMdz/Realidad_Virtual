@@ -102,26 +102,28 @@
 \newcommand{\materia}{Realidad Virtual}
 \newcommand{\autor}{José Guadalupe Méndez Pérez}
 \newcommand{\lugarfecha}{Tampico, Tamaulipas; México. Noviembre 2026}
-\newcommand{\archivologo}{logos-uat-fi.png}
+\newcommand{\logouat}{logo-uat.png}
+\newcommand{\logofi}{logo-fi.png}
+\newcommand{\altologo}{1.7cm}
 
 % \portada{titulo del documento}
 \newcommand{\portada}[1]{%
   \begin{titlepage}
     \begin{center}
+      % Los logos van arriba de todo. Se incluyen solo si existen, para que la
+      % compilacion no falle mientras falte alguno.
+      \IfFileExists{figuras/\logouat}{%
+        \includegraphics[height=\altologo]{\logouat}%
+        \hfill
+        \includegraphics[height=\altologo]{\logofi}\\[2.5em]
+      }{%
+        \fbox{\parbox[c][1.7cm][c]{0.85\textwidth}{\centering\small
+          Faltan los logos en \texttt{documentos/figuras/}}}\\[2.5em]
+      }
+
       \textsc{\Large \institucion}\\[1em]
       \textsc{\Large \facultad}\\[1em]
-      \textsc{\Large \division}\\[1.5em]
-
-      % El logo se incluye solo si el archivo existe, para que la compilacion
-      % no falle mientras no este cargado.
-      \IfFileExists{figuras/\archivologo}{%
-        \includegraphics[width=\textwidth]{\archivologo}\\[1.5em]
-      }{%
-        \vspace{1em}
-        \fbox{\parbox[c][2.5cm][c]{0.85\textwidth}{\centering\small
-          Falta \texttt{documentos/figuras/\archivologo}.\\
-          Al agregarlo, el logo aparece aquí automáticamente.}}\\[1.5em]
-      }
+      \textsc{\Large \division}\\[3em]
 
       \parbox{\textwidth}{\centering\baselineskip=2.5em\textsc{\Large\textbf{#1}}}\\[2.5em]
 
