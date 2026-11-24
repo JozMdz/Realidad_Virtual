@@ -93,16 +93,42 @@
 }
 \pagestyle{fancy}
 
-% --- Portada: \portada{titulo}{materia} ------------------------------------
+% --- Portada institucional -------------------------------------------------
+% Datos editables: redefinir con \renewcommand en el documento si hace falta.
+\newcommand{\institucion}{Universidad Autónoma de Tamaulipas}
+\newcommand{\facultad}{Facultad de Ingeniería Tampico}
+\newcommand{\division}{División de Estudios de Posgrado e Investigación}
+\newcommand{\autor}{José Méndez}
+\newcommand{\lugarfecha}{Tampico, Tamaulipas; México. Noviembre 2026}
+\newcommand{\archivologo}{logos_uat_fi.png}
+
+% \portada{titulo del documento}{materia}
 \newcommand{\portada}[2]{%
   \begin{titlepage}
     \begin{center}
-      \vspace*{4cm}
-      \parbox{\textwidth}{\centering\baselineskip=2.2em\textsc{\Large\textbf{#1}}}\\[3em]
-      \textsc{\large #2}\\[3em]
-      \textsc{\Large José Méndez}\\[2em]
-      \textsc{\large \today}
+      \textsc{\Large \institucion}\\[1em]
+      \textsc{\Large \facultad}\\[1em]
+      \textsc{\Large \division}\\[1.5em]
+
+      % El logo se incluye solo si el archivo existe, para que la compilacion
+      % no falle mientras no este cargado.
+      \IfFileExists{figuras/\archivologo}{%
+        \includegraphics[width=\textwidth]{\archivologo}\\[1.5em]
+      }{%
+        \vspace{1em}
+        \fbox{\parbox[c][2.5cm][c]{0.85\textwidth}{\centering\small
+          Falta \texttt{documentos/figuras/\archivologo}.\\
+          Al agregarlo, el logo aparece aquí automáticamente.}}\\[1.5em]
+      }
+
+      \parbox{\textwidth}{\centering\baselineskip=2.5em\textsc{\Large\textbf{#1}}}\\[2.5em]
+
+      \textsc{\large #2}\\[2em]
+
+      \textsc{presenta}\\[1em]
+      \textsc{\Large \autor}\\[2em]
     \end{center}
     \vspace*{\fill}
+    \textsc{\hspace*{\fill}\lugarfecha}
   \end{titlepage}
 }
