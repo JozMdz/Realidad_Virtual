@@ -160,12 +160,23 @@ def escribir(tb, cuerpo, pt):
         r.font.color.rgb = NEGRO
 
 
-def pie(slide, x, y, w, texto, pt=10):
-    tb = caja(slide, x, y, w, 0.4)
+CONTADOR = {"Tabla": 0, "Figura": 0}
+
+
+def leyenda(slide, x, y, w, clase, texto, pt=10):
+    """Escribe la leyenda numerada de una tabla o una figura."""
+    CONTADOR[clase] += 1
+    tb = caja(slide, x, y, w, 0.5)
     p = tb.text_frame.paragraphs[0]
-    r = p.add_run(); r.text = texto
-    r.font.name = SERIF; r.font.size = Pt(pt); r.font.italic = True
-    r.font.color.rgb = GRIS
+    etiqueta = p.add_run()
+    etiqueta.text = "%s %d. " % (clase, CONTADOR[clase])
+    etiqueta.font.bold = True
+    cuerpo = p.add_run()
+    cuerpo.text = texto
+    for r in (etiqueta, cuerpo):
+        r.font.name = SERIF
+        r.font.size = Pt(pt)
+        r.font.color.rgb = GRIS
     return tb
 
 
@@ -278,9 +289,10 @@ def main():
             for ph in list(sl.placeholders):
                 if ph.placeholder_format.idx == 1:
                     ph._element.getparent().remove(ph._element)
-            ix, iy, iw, ih = encajar(*extra)
+            ix, iy, iw, ih = encajar(*extra[:5])
             sl.shapes.add_picture(extra[0], Inches(ix), Inches(iy),
                                   width=Inches(iw), height=Inches(ih))
+            leyenda(sl, ix, iy + ih + 0.10, iw, "Figura", extra[5], pt=11)
         elif tipo == "figura":
             sl = prs.slides.add_slide(prs.slide_layouts[L_DOS])
             t = sl.shapes.title
@@ -296,9 +308,10 @@ def main():
                 pt -= 1
             tb = caja(sl, x, y, w, 4.3)
             escribir(tb, bloque, pt)
-            ix, iy, iw, ih = encajar(*extra)
+            ix, iy, iw, ih = encajar(*extra[:5])
             sl.shapes.add_picture(extra[0], Inches(ix), Inches(iy),
                                   width=Inches(iw), height=Inches(ih))
+            leyenda(sl, ix, iy + ih + 0.10, iw, "Figura", extra[5])
         else:
             sl = prs.slides.add_slide(prs.slide_layouts[L_TRES])
             poner_titulo(sl, titulo, lineas=1, ancho=7.5, tope=34)
@@ -329,7 +342,7 @@ def main():
                 h = tabla(sl, xt, yt, ancho_t, enc, filas,
                           pt=11 if len(enc) <= 5 else 10)
                 if nota:
-                    pie(sl, xt, yt + h + 0.08, ancho_t, nota, pt=10)
+                    leyenda(sl, xt, yt + h + 0.08, ancho_t, "Tabla", nota)
         numero_pagina(prs, sl, total)
 
     # ---- referencias
@@ -379,6 +392,22 @@ def main():
                 if hijo.tag in (qn("a:r"), qn("a:br")):
                     p._p.remove(hijo)
             r = p.add_run(); r.text = "GRACIAS POR SU ATENCIÓN"
+            p2 = tf.add_paragraph()
+            p2._p.insert(0, copy.deepcopy(p._p.find(qn("a:pPr")))) \
+                if p._p.find(qn("a:pPr")) is not None else None
+            r2 = p2.add_run()
+            r2.text = "\nMtro. José Guadalupe Méndez Pérez"
+            r2.font.size = Pt(18)
+
+    props = prs.core_properties
+    props.author = "Mtro. José Guadalupe Méndez Pérez"
+    props.last_modified_by = "Mtro. José Guadalupe Méndez Pérez"
+    props.title = "Predicción de mortalidad hospitalaria en el conjunto SUPPORT2"
+    props.subject = "Proyecto Integrador – Realidad Virtual"
+    props.comments = ("Doctorado en Ciencias de la Computación. "
+                      "Universidad Autónoma de Tamaulipas, Facultad de Ingeniería Tampico.")
+    props.category = ""
+    props.keywords = ""
 
     prs.save(SAL)
     print("diapositivas:", len(prs.slides), "->", SAL)

@@ -54,7 +54,9 @@ SLIDES = [
         "diferencias observadas son estadísticamente significativas."),
 ], None),
 
-("diagrama", "Metodología", [], (FIG + "flujo.png", 1.85, 1.85, 9.62, 4.40)),
+("diagrama", "Metodología", [], (FIG + "flujo.png", 1.85, 1.85, 9.62, 3.85,
+  "Estructura secuencial del preprocesamiento. Las etapas destacadas corresponden a las dos "
+  "decisiones que condicionan la validez del resultado.")),
 
 ("texto", "Las dos decisiones críticas", [
     ("B", "Fuga por columna"),
@@ -69,7 +71,8 @@ SLIDES = [
 ], ("tabla", ["Conjunto de variables", "Columnas", "AUC"],
     [["Con las variables posteriores al ingreso", "48", "0.948"],
      ["Sin las variables posteriores al ingreso", "41", "0.879"]],
-    "El modelo pronóstico del propio estudio alcanza 0.841 y la estimación del médico tratante 0.814.")),
+    "Efecto de las variables posteriores al ingreso sobre el desempeño. El modelo pronóstico del "
+    "propio estudio alcanza 0.841 y la estimación del médico tratante 0.814.")),
 
 ("texto", "Protocolo de trabajo", [
     ("B", "Organización"),
@@ -112,7 +115,8 @@ SLIDES = [
     (0, "Los fallecimientos constituyen aproximadamente una cuarta parte de los casos."),
     (0, "El desbalance condiciona la elección de las métricas de evaluación: la exactitud por sí "
         "sola resulta insuficiente."),
-], (FIG + "clases.png", 6.95, 2.30, 6.00, 3.80)),
+], (FIG + "clases.png", 6.95, 2.30, 6.00, 3.10,
+  "Distribución de la variable objetivo hospdead en el conjunto de entrenamiento.")),
 
 ("texto", "Limpieza", [
     ("B", "Registros duplicados"),
@@ -156,7 +160,8 @@ SLIDES = [
 ], ("tabla", ["Variables", "Componentes principales", "Selección directa"],
     [["40 (todas)", "0.8791", "0.8791"], ["30", "0.8779", "0.8798"],
      ["20", "0.8663", "0.8723"], ["10", "0.8620", "0.8723"], ["5", "0.8517", "0.8691"]],
-    "AUC sobre el conjunto de prueba. Se conservaron las 40 variables.")),
+    "Componentes principales frente a selección directa de variables. AUC sobre el conjunto de "
+    "prueba; se conservaron las 40 variables.")),
 
 ("texto", "Modelos y algoritmos aplicados", [
     ("B", "Por qué tres modelos y no uno"),
@@ -173,7 +178,8 @@ SLIDES = [
     [["Regresión logística", "Penalización L2, hasta 3000 iteraciones", "Sí"],
      ["Árbol de decisión", "Profundidad máxima 5, criterio Gini", "No"],
      ["Vecinos más cercanos", "25 vecinos, distancia euclidiana", "Sí"],
-     ["Referencia trivial", "Predice siempre la clase mayoritaria", "No"]], None)),
+     ["Referencia trivial", "Predice siempre la clase mayoritaria", "No"]],
+    "Configuración de los modelos evaluados.")),
 
 ("figura", "Regresión logística", [
     ("B", "Mecanismo"),
@@ -184,7 +190,9 @@ SLIDES = [
     (0, "El modelo concede el mayor peso a las mediciones de gravedad clínica."),
     (0, "Entre los coeficientes negativos figuran indicadores de grupo diagnóstico: "
         "insuficiencia cardíaca congestiva, cáncer de colon y EPOC."),
-], (FIG + "coeficientes.png", 6.95, 1.85, 6.05, 4.50)),
+], (FIG + "coeficientes.png", 6.95, 1.85, 6.05, 3.60,
+  "Coeficientes de mayor magnitud de la regresión logística. En rojo los que incrementan el "
+  "riesgo estimado, en azul los que lo reducen.")),
 
 ("figura", "Árbol de decisión", [
     ("B", "Mecanismo"),
@@ -199,7 +207,9 @@ SLIDES = [
     ("B", "Sin estandarización"),
     (0, "El árbol compara cada valor contra un umbral, operación que no se altera al restar la "
         "media y dividir por la desviación."),
-], (FIG + "arbol.png", 6.90, 2.20, 6.15, 4.00)),
+], (FIG + "arbol.png", 6.90, 2.20, 6.15, 3.20,
+  "Primeros dos niveles del árbol de decisión. La profundidad completa es de cinco niveles y "
+  "32 hojas.")),
 
 ("figura", "Vecinos más cercanos", [
     ("B", "Mecanismo"),
@@ -212,7 +222,8 @@ SLIDES = [
         "0.833 con doscientos uno."),
     (0, "Se adoptó k = 25 por constituir un valor intermedio que conserva el carácter local del "
         "método."),
-], (FIG + "vecinos.png", 6.95, 2.15, 6.00, 4.00)),
+], (FIG + "vecinos.png", 6.95, 2.15, 6.00, 3.15,
+  "AUC promedio en validación cruzada según el número de vecinos.")),
 
 ("texto", "Resultados en el conjunto de prueba", [
     ("B", "1,821 registros que no intervinieron en el entrenamiento ni en la elección de los "
@@ -226,7 +237,7 @@ SLIDES = [
      ["Árbol de decisión", "0.847", "0.807", "0.701", "0.447", "0.546"],
      ["Vecinos más cercanos", "0.835", "0.797", "0.721", "0.356", "0.477"],
      ["Referencia trivial", "0.500", "0.741", "0.000", "0.000", "0.000"]],
-    "Precisión, recall y F1 corresponden a la clase fallece.")),
+    "Métricas sobre el conjunto de prueba. Precisión, recall y F1 corresponden a la clase fallece.")),
 
 ("figura", "Curvas ROC", [
     ("B", "Qué describe el AUC"),
@@ -239,7 +250,9 @@ SLIDES = [
     ("B", "Lo que el AUC no informa"),
     (0, "El comportamiento en el umbral de decisión, que es donde el ordenamiento se traduce en "
         "una predicción."),
-], (FIG + "roc.png", 7.05, 1.70, 5.80, 4.70)),
+], (FIG + "roc.png", 7.05, 1.70, 5.80, 3.60,
+  "Curvas ROC sobre el conjunto de prueba. La diagonal corresponde a un clasificador que no "
+  "ordena.")),
 
 ("texto", "Matrices de confusión", [
     ("B", "Qué tipo de error comete cada modelo"),
@@ -252,7 +265,8 @@ SLIDES = [
     [["Regresión logística", "1261", "88", "227", "245"],
      ["Árbol de decisión", "1259", "90", "261", "211"],
      ["Vecinos más cercanos", "1284", "65", "304", "168"]],
-    "VN y VP son los aciertos; FP las falsas alarmas y FN los fallecimientos no detectados.")),
+    "Matrices de confusión sobre el conjunto de prueba. VN y VP son los aciertos; FP las falsas "
+    "alarmas y FN los fallecimientos no detectados.")),
 
 ("texto", "Pruebas de significancia", [
     ("B", "Estabilidad"),
@@ -268,7 +282,8 @@ SLIDES = [
     [["Regresión logística vs. Árbol", "0.0059*", "95 / 59", "0.0139*"],
      ["Regresión logística vs. Vecinos", "0.0059*", "123 / 69", "0.0004*"],
      ["Árbol vs. Vecinos", "1.0000", "118 / 100", "0.7485"]],
-    "El asterisco indica significancia al 5%. El árbol y los vecinos no se distinguen entre sí.")),
+    "Comparación por pares. Los valores p incluyen corrección de Bonferroni para tres "
+    "comparaciones; el asterisco indica significancia al 5%.")),
 
 ("texto", "El problema del recall", [
     ("B", "El mejor modelo identifica el 51.9% de los pacientes que fallecen."),
@@ -285,7 +300,7 @@ SLIDES = [
 ], ("tabla", ["Configuración", "AUC", "Exactitud", "Precisión", "Recall"],
     [["Sin ponderación", "0.879", "0.827", "0.736", "0.519"],
      ["Con ponderación balanceada", "0.879", "0.791", "0.569", "0.790"]],
-    "Regresión logística sobre el conjunto de prueba.")),
+    "Efecto de la ponderación de clases sobre la regresión logística, sobre el conjunto de prueba.")),
 
 ("texto", "Recomendaciones de mejora", [
     ("B", "1. Fijar el umbral según el costo de cada error"),
