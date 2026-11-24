@@ -315,42 +315,304 @@ generados como consecuencia del propio desenlace.
 \label{sec:limpieza}
 %============================================================================
 
-\textit{Sección en elaboración.}
+La limpieza comprende las operaciones destinadas a eliminar registros redundantes, descartar
+columnas sin información suficiente, acotar valores extremos y completar los datos ausentes. Su
+ejecución se distribuye entre los lotes 4 y 8.
+
+\subsection{Registros duplicados}
+
+Se verificó la existencia de filas idénticas en la totalidad de sus columnas. El conjunto no
+presentó registros duplicados: las 9{,}105 filas originales se conservaron íntegramente.
+
+Pese a no haber producido modificaciones, la verificación se mantiene en el procedimiento y se
+ejecuta \textbf{antes} de la partición entre entrenamiento y prueba. De existir registros
+repetidos, la partición podría asignar copias de una misma fila a ambos conjuntos, de modo que el
+modelo sería evaluado sobre observaciones ya empleadas durante su entrenamiento.
+
+\subsection{Columnas con exceso de valores ausentes}
+
+Se estableció un umbral del 50\% de valores ausentes como criterio de exclusión. Las columnas que
+lo superan fueron \texttt{adlp}, con 61.8\%, y \texttt{urine}, con 53.5\%, ambas medidas sobre el
+conjunto de entrenamiento.
+
+El fundamento de la exclusión es que la imputación de más de la mitad de una columna implica
+generar mayor cantidad de valores que los efectivamente observados. El resultado describiría en
+mayor medida el procedimiento de imputación que el fenómeno medido.
+
+Debe señalarse que el umbral constituye una decisión y no una regla derivada de los datos. Dos
+columnas conservadas se sitúan próximas al límite: \texttt{glucose}, con 49.6\%, y \texttt{bun},
+con 47.9\%. Un umbral del 45\% habría excluido ambas.
+
+\subsection{Tratamiento de valores atípicos}
+
+El tratamiento de valores extremos se realizó mediante el criterio del rango intercuartílico. A
+partir del primer y tercer cuartil de cada columna se definen los límites
+
+\[
+L_{\text{inf}} = Q_1 - 1.5 \cdot \text{RIC},
+\qquad
+L_{\text{sup}} = Q_3 + 1.5 \cdot \text{RIC},
+\qquad
+\text{RIC} = Q_3 - Q_1
+\]
+
+Los valores situados fuera de dicho intervalo no se eliminaron sino que se acotaron al límite
+correspondiente. Esta decisión preserva el tamaño del conjunto: la eliminación de registros
+completos por un único valor extremo descartaría el resto de las mediciones de ese paciente.
+
+Los límites se calcularon exclusivamente sobre el conjunto de entrenamiento y se aplicaron sin
+modificación a ambos conjuntos, conforme al criterio expuesto en la Sección \ref{sec:orden}.
+
+El procedimiento excluye las columnas binarias, identificadas como aquellas que presentan dos o
+menos valores distintos: \texttt{diabetes}, \texttt{dementia} y la propia variable objetivo. En
+una columna que sólo admite los valores cero y uno la noción de valor extremo carece de sentido, y
+la aplicación del criterio podría suprimir íntegramente una de las dos categorías.
+
+De las 21 columnas numéricas evaluadas, 20 presentaron registros fuera de los límites. La Tabla
+\ref{tab:atipicos} detalla los límites obtenidos y la cantidad de registros acotados en cada
+conjunto.
+
+\input{tablas/atipicos.tex}
+
+\subsection{Imputación de valores faltantes}
+
+Las columnas numéricas se completaron con la mediana y las categóricas con la moda, calculadas
+ambas sobre el conjunto de entrenamiento y aplicadas sin recalcular sobre el de prueba.
+
+Se optó por la mediana en lugar de la media debido a su menor sensibilidad a valores extremos.
+Aunque el acotamiento previo reduce esa diferencia, la mediana conserva la ventaja de corresponder
+siempre a un valor plausible de la escala.
+
+El procedimiento completó 24{,}379 valores ausentes entre ambos conjuntos, de modo que el
+resultado no contiene datos faltantes.
+
+Corresponde señalar una limitación: la imputación por mediana reduce artificialmente la varianza
+de la columna y concentra masa de probabilidad en un único valor. En columnas con alta proporción
+de ausencias, como \texttt{glucose} con 49.6\%, aproximadamente la mitad de los registros comparte
+el mismo valor tras la imputación. Una alternativa consistiría en incorporar una variable
+indicadora de ausencia por columna, de modo que el modelo pudiera utilizar la ausencia misma como
+información; dicha alternativa no fue implementada.
 
 %============================================================================
 \section{Transformación}
 \label{sec:transformacion}
 %============================================================================
 
-\textit{Sección en elaboración.}
+\subsection{Codificación de variables categóricas}
+
+Tras la limpieza, el conjunto conserva cinco variables categóricas expresadas como texto:
+\texttt{sex} con dos categorías, \texttt{ca} con tres, \texttt{income} con cuatro, \texttt{race}
+con cinco y \texttt{dzgroup} con ocho.
+
+El procedimiento de codificación consta de dos etapas. En primer lugar se fija, a partir del
+conjunto de entrenamiento, el repertorio de categorías admisibles de cada columna, y se impone
+dicho repertorio al conjunto de prueba. Esta operación garantiza que ambos conjuntos generen el
+mismo número de columnas y en el mismo orden, condición necesaria para que el modelo pueda recibir
+indistintamente uno u otro. El procedimiento verifica además la aparición de categorías presentes
+en prueba y ausentes en entrenamiento; en este conjunto no se registró ningún caso.
+
+En segundo lugar se aplica la codificación indicadora con la opción \textit{drop first}, que
+descarta la primera categoría de cada variable. La categoría descartada no se pierde: queda
+representada implícitamente por la ausencia de las restantes, y su inclusión generaría una columna
+linealmente dependiente de las demás.
+
+La codificación incrementó el número de columnas de 29 a 41.
+
+\subsection{Estandarización de escalas}
+
+Las variables del conjunto resultante conservan sus unidades originales, que difieren
+considerablemente entre sí: la edad se expresa en años, el pH en unidades logarítmicas con un
+recorrido inferior a una décima, y la glucosa en miligramos por decilitro con valores de tres
+cifras.
+
+La estandarización no se aplicó durante el preprocesamiento sino que se incorporó al procedimiento
+de modelado, por dos motivos. El primero es que su necesidad depende del algoritmo: los métodos
+basados en distancias o en coeficientes penalizados la requieren, mientras que los basados en
+particiones por umbral son invariantes ante transformaciones monótonas. El segundo es que el
+escalador debe ajustarse únicamente sobre los datos de entrenamiento de cada partición de
+validación, lo que exige integrarlo al flujo de entrenamiento y no al archivo.
 
 %============================================================================
 \section{Reducción de la dimensionalidad}
 \label{sec:reduccion}
 %============================================================================
 
-\textit{Sección en elaboración.}
+\subsection{Reducción aplicada}
+
+La reducción efectivamente realizada sobre este conjunto operó por criterio sobre el significado
+de cada variable, no por proyección algebraica. Se documenta en la Sección \ref{sec:fuga} y
+comprende catorce columnas excluidas por fuga de información o redundancia, a las que se suman las
+dos descartadas por exceso de valores ausentes. El conjunto pasó de 45 columnas originales a 29
+previas a la codificación.
+
+\subsection{Evaluación del análisis de componentes principales}
+
+Se evaluó la aplicación de análisis de componentes principales sobre el conjunto resultante, con
+el propósito de determinar si las 40 variables de entrada admitían una representación de menor
+dimensión. El procedimiento se ajustó exclusivamente sobre el conjunto de entrenamiento, previa
+estandarización.
+
+Los resultados no respaldan la aplicación del método. El primer componente explica únicamente el
+8.4\% de la varianza total, el segundo el 6.3\% y el tercero el 5.1\%. Alcanzar el 80\% de la
+varianza requiere 24 de los 40 componentes disponibles, y el 90\% requiere 29. Una reducción de 40
+a 24 dimensiones no constituye una compresión que justifique la pérdida de interpretabilidad.
+
+La explicación reside en la estructura del conjunto. El análisis de componentes principales resume
+eficazmente variables correlacionadas entre sí, condición que no se verifica en estos datos: las
+mediciones clínicas son en buena medida independientes, dado que la creatinina no informa sobre la
+concentración de sodio ni ésta sobre la temperatura. Las doce columnas indicadoras generadas por
+la codificación son, además, aproximadamente ortogonales por construcción.
+
+\subsection{Comparación con selección directa de variables}
+
+Como alternativa se evaluó la selección directa de las $k$ variables más informativas mediante el
+estadístico F univariado. La Tabla \ref{tab:reduccion} compara ambos procedimientos según el área
+bajo la curva obtenida por una regresión logística sobre el conjunto de prueba.
+
+\begin{table}[H]
+\centering
+\caption{Comparación entre componentes principales y selección directa de variables}
+\label{tab:reduccion}
+\small
+\begin{tabular}{r r r}
+\toprule
+\textbf{Variables} & \textbf{Componentes principales} & \textbf{Selección directa} \\
+\midrule
+40 (todas) & 0.8791 & 0.8791 \\
+30 & 0.8779 & 0.8798 \\
+20 & 0.8663 & 0.8723 \\
+15 & 0.8659 & 0.8725 \\
+10 & 0.8620 & 0.8723 \\
+5  & 0.8517 & 0.8691 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La selección directa supera a los componentes principales en todos los tamaños evaluados. Con 30
+variables seleccionadas se obtiene un AUC de 0.8798, ligeramente superior al alcanzado con las 40
+disponibles. Las quince variables más informativas resultaron ser los tres puntajes de severidad
+\texttt{scoma}, \texttt{sps} y \texttt{aps}, el día de ingreso al estudio, cuatro mediciones de
+laboratorio, el índice de funcionalidad y seis indicadores de grupo diagnóstico.
+
+A diferencia de los componentes principales, este procedimiento conserva la identidad de las
+variables, lo que permite describir el modelo en términos clínicos. No obstante, la reducción no
+se incorporó al conjunto final: con 40 variables el entrenamiento no presenta dificultades de
+cómputo ni indicios de sobreajuste, de modo que la simplificación no responde a una necesidad
+verificada.
+
+Debe consignarse una reserva metodológica. El análisis de componentes principales se aplicó sobre
+un conjunto que combina variables continuas con variables indicadoras de valor cero o uno, en las
+cuales la varianza no admite la misma interpretación. Esta circunstancia no invalida la conclusión,
+dada su magnitud, pero conviene declararla.
 
 %============================================================================
 \section{Fuga de información por orden de operaciones}
 \label{sec:orden}
 %============================================================================
 
-\textit{Sección en elaboración.}
+La Sección \ref{sec:fuga} documentó la fuga originada en el contenido de ciertas columnas. Existe
+una segunda forma de fuga que no depende de qué variables se utilizan sino de en qué orden se
+ejecutan las operaciones.
+
+\subsection{Partición previa al cálculo de parámetros}
+
+Diversas etapas del preprocesamiento requieren estimar un parámetro a partir de los datos: la
+mediana empleada en la imputación, los límites del rango intercuartílico, el repertorio de
+categorías admisibles. Si dichos parámetros se calculan sobre la totalidad del conjunto, la
+información de los registros reservados para evaluación queda incorporada en ellos antes de que la
+evaluación tenga lugar.
+
+Por este motivo la partición se ejecuta en el lote 5, antes de cualquier estimación. La partición
+asigna el 80\% de los registros a entrenamiento y el 20\% restante a prueba, de forma
+estratificada: la proporción de fallecimientos se mantiene en 25.9\% en ambos conjuntos. A partir
+de ese punto, todo parámetro se estima sobre el conjunto de entrenamiento y se aplica sin
+modificación al de prueba.
+
+\subsection{Efecto del orden entre imputación y acotamiento}
+
+Una aplicación concreta del principio anterior se verifica en la relación entre los lotes 7 y 8.
+El acotamiento de valores atípicos se ejecuta \textbf{antes} de la imputación, y no después.
+
+El fundamento es el siguiente. Si una columna presenta una proporción elevada de valores ausentes
+y éstos se completan con la mediana, una fracción considerable de los registros pasa a compartir
+ese valor. Los cuartiles se desplazan hacia el centro de la distribución, el rango intercuartílico
+se contrae y los límites resultantes se estrechan hasta perder correspondencia con la escala real
+de la variable.
+
+La Tabla \ref{tab:ordenric} cuantifica el efecto sobre cinco columnas.
+
+\input{tablas/orden-ric.tex}
+
+El caso de \texttt{glucose} resulta ilustrativo. Calculados sobre los valores efectivamente
+medidos, los límites abarcan el intervalo de $-26.0$ a $318.0$; calculados tras la imputación, se
+reducen a $131.0$ y $139.0$. Un registro con glucosa de 300 miligramos por decilitro, valor
+clínicamente relevante, quedaría reducido a 139 bajo el segundo procedimiento.
+
+El contraste con \texttt{crea} confirma el diagnóstico: al presentar únicamente 0.6\% de valores
+ausentes, sus límites resultan idénticos bajo ambos órdenes. La distorsión es, por tanto,
+atribuible a la imputación previa y no al criterio del rango intercuartílico.
+
+Considerando la totalidad de las columnas evaluadas, el orden correcto acota 6{,}477 registros,
+mientras que el orden inverso acotaría 18{,}507, aproximadamente el triple. La diferencia no
+corresponde a valores atípicos adicionales detectados, sino a mediciones legítimas suprimidas por
+unos límites mal estimados.
 
 %============================================================================
 \section{Validación del resultado}
 \label{sec:validacion}
 %============================================================================
 
-\textit{Sección en elaboración.}
+El procedimiento concluye con una etapa de verificación automática que vuelve a leer los archivos
+generados y comprueba las condiciones que debe satisfacer un conjunto apto para modelado. Las
+comprobaciones son las siguientes:
+
+\begin{enumerate}
+\item Ausencia de valores faltantes en ambos conjuntos.
+\item Tipo numérico en la totalidad de las columnas.
+\item Coincidencia de columnas, en identidad y orden, entre entrenamiento y prueba.
+\item Ubicación de la variable objetivo en la última posición y restricción de sus valores al
+      conjunto $\{0, 1\}$.
+\item Ausencia de columnas constantes o duplicadas, que no aportarían información.
+\item Ausencia de registros compartidos entre ambos conjuntos.
+\item Equivalencia aproximada en la proporción de la clase positiva.
+\end{enumerate}
+
+La verificación interrumpe la ejecución ante cualquier incumplimiento, en lugar de permitir que un
+archivo defectuoso avance a la etapa de modelado. El conjunto resultante satisface la totalidad de
+las condiciones.
+
+Los archivos finales contienen 7{,}284 registros de entrenamiento y 1{,}821 de prueba, con 41
+columnas cada uno, sin valores ausentes y con la variable objetivo en la última posición.
 
 %============================================================================
 \section{Conclusiones}
 \label{sec:conclusiones}
 %============================================================================
 
-\textit{Sección en elaboración.}
+El preprocesamiento transformó un archivo de 9{,}105 registros y 45 columnas, con valores
+ausentes y variables categóricas en texto, en dos conjuntos numéricos y completos de 41 columnas
+aptos para el entrenamiento y la evaluación de un clasificador.
+
+Las operaciones de limpieza, transformación y reducción se ejecutaron conforme a los
+procedimientos habituales. No obstante, el resultado estuvo determinado principalmente por dos
+decisiones que no corresponden a ninguna de esas tres categorías, sino al criterio sobre qué
+información resulta admisible y en qué orden debe procesarse.
+
+La primera fue la exclusión de catorce columnas por fuga de información. Seis de ellas
+—\texttt{dnr}, \texttt{dnrday}, \texttt{charges}, \texttt{totcst}, \texttt{totmcst} y
+\texttt{avtisst}— registran hechos posteriores al ingreso, y su presencia elevaba el área bajo la
+curva de 0.879 a 0.948, valor que supera tanto al modelo pronóstico del propio estudio (0.841)
+como a la estimación del médico tratante (0.814).
+
+La segunda fue el orden entre el acotamiento de valores atípicos y la imputación. El orden
+inverso, aparentemente equivalente, habría acotado 18{,}507 registros en lugar de 6{,}477,
+suprimiendo mediciones legítimas en las columnas con mayor proporción de datos ausentes.
+
+Ambas decisiones comparten una característica: no producen error visible. Un preprocesamiento que
+incurriera en cualquiera de ellas generaría archivos con la forma correcta, sin valores faltantes y
+que superarían la totalidad de las comprobaciones de la Sección \ref{sec:validacion}. La primera
+produciría además un modelo aparentemente superior. Su detección requiere examinar el significado
+de cada variable y el momento en que cada operación se ejecuta, no la forma del resultado.
 
 \printbibliography[title={Referencias}]
 

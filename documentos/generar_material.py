@@ -201,6 +201,80 @@ def tabla_exclusiones():
         "\\bottomrule\n\\end{tabular}\n\\end{table}\n", encoding="utf-8")
 
 
+def tabla_atipicos():
+    """Tabla con los limites del RIC y las filas acotadas en cada columna."""
+    from modularizado.utilidades import cargar_intermedio, columnas_por_tipo
+    from modularizado.lote_07_atipicos import limites_ric, separar_binarias
+
+    entrenamiento = cargar_intermedio("06_entrenamiento")
+    prueba = cargar_intermedio("06_prueba")
+    numericas, _ = columnas_por_tipo(entrenamiento)
+    _, revisables = separar_binarias(entrenamiento, numericas)
+
+    filas = []
+    for columna in revisables:
+        inferior, superior = limites_ric(entrenamiento[columna])
+        fuera_train = int(((entrenamiento[columna] < inferior) |
+                           (entrenamiento[columna] > superior)).sum())
+        fuera_test = int(((prueba[columna] < inferior) | (prueba[columna] > superior)).sum())
+        if fuera_train or fuera_test:
+            filas.append((escapar(columna), f"{inferior:.2f}", f"{superior:.2f}",
+                          fuera_train, fuera_test))
+    filas.sort(key=lambda f: -f[3])
+
+    cuerpo = "\n".join(f"\\texttt{{{c}}} & {i} & {s} & {a} & {b} \\\\"
+                       for c, i, s, a, b in filas)
+    (TABLAS / "atipicos.tex").write_text(
+        "\\begin{table}[H]\n\\centering\n"
+        "\\caption{Límites del rango intercuartílico y registros acotados por columna}\n"
+        "\\label{tab:atipicos}\n\\small\n"
+        "\\begin{tabular}{l r r r r}\n\\toprule\n"
+        "\\textbf{Columna} & \\textbf{Límite inf.} & \\textbf{Límite sup.} & "
+        "\\textbf{Entrenamiento} & \\textbf{Prueba} \\\\\n\\midrule\n"
+        f"{cuerpo}\n"
+        "\\bottomrule\n\\end{tabular}\n\\end{table}\n", encoding="utf-8")
+    return len(filas)
+
+
+def tabla_orden_ric():
+    """Compara los limites del RIC calculados antes y despues de imputar."""
+    from modularizado.utilidades import cargar_intermedio, columnas_por_tipo
+    from modularizado.lote_07_atipicos import limites_ric, separar_binarias
+
+    entrenamiento = cargar_intermedio("06_entrenamiento")
+    numericas, _ = columnas_por_tipo(entrenamiento)
+    _, revisables = separar_binarias(entrenamiento, numericas)
+
+    filas, total_real, total_imputado = [], 0, 0
+    for columna in revisables:
+        serie = entrenamiento[columna]
+        inf_real, sup_real = limites_ric(serie)
+        imputada = serie.fillna(serie.median())
+        inf_imp, sup_imp = limites_ric(imputada)
+        rec_real = int(((serie < inf_real) | (serie > sup_real)).sum())
+        rec_imp = int(((imputada < inf_imp) | (imputada > sup_imp)).sum())
+        total_real += rec_real
+        total_imputado += rec_imp
+        if columna in ("glucose", "bun", "alb", "edu", "crea"):
+            filas.append((escapar(columna), f"{serie.isna().mean() * 100:.1f}",
+                          f"{inf_real:.1f} a {sup_real:.1f}", f"{inf_imp:.1f} a {sup_imp:.1f}",
+                          rec_real, rec_imp))
+
+    cuerpo = "\n".join(f"\\texttt{{{c}}} & {n} & {a} & {b} & {d} & {e} \\\\"
+                       for c, n, a, b, d, e in filas)
+    (TABLAS / "orden-ric.tex").write_text(
+        "\\begin{table}[H]\n\\centering\n"
+        "\\caption{Efecto del orden entre imputación y acotamiento sobre los límites del RIC}\n"
+        "\\label{tab:ordenric}\n\\small\n"
+        "\\begin{tabular}{l r p{2.4cm} p{2.4cm} r r}\n\\toprule\n"
+        "\\textbf{Columna} & \\textbf{\\% nulos} & \\textbf{Límites reales} & "
+        "\\textbf{Límites tras imputar} & \\textbf{Rec. real} & \\textbf{Rec. imp.} \\\\\n"
+        "\\midrule\n"
+        f"{cuerpo}\n"
+        "\\bottomrule\n\\end{tabular}\n\\end{table}\n", encoding="utf-8")
+    return total_real, total_imputado
+
+
 def main():
     """Genera todo el material y reporta los archivos producidos."""
     FIGURAS.mkdir(exist_ok=True)
@@ -214,6 +288,8 @@ def main():
     tabla_variables(crudo, ficha)
     tabla_exclusiones()
     referencia = tabla_referencia(crudo)
+    acotadas = tabla_atipicos()
+    total_real, total_imputado = tabla_orden_ric()
 
     print(f"Variables en el csv original: {crudo.shape[1]}")
     print(f"Variables verificadas contra la ficha oficial: {crudo.columns.isin(ficha.index).sum()}")
@@ -221,6 +297,8 @@ def main():
     print("AUC de las estimaciones del propio estudio frente a hospdead:")
     for etiqueta, casos, auc in referencia:
         print(f"  {etiqueta}: {auc} (n={casos})")
+    print(f"Columnas con registros acotados: {acotadas}")
+    print(f"Registros acotados -- antes de imputar: {total_real}, despues: {total_imputado}")
     print("Generado: figuras/clases.png y las tablas en tablas/")
 
 
