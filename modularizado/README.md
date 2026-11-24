@@ -59,18 +59,23 @@ Para volver a incluir las columnas posteriores al ingreso (`dnr`, `dnrday`, `cha
 
 # Modelado
 
-Dos archivos, el mismo trabajo, los mismos resultados. Cambia como se leen.
+Dos archivos entrenan los mismos tres modelos y dan los mismos numeros. Cambia como se leen, y
+el secuencial lleva un paso mas.
 
 | | `modelado_base.py` | `modelado_secuencial.py` |
 |---|---|---|
 | Estructura | funciones reutilizables | un flujo de arriba a abajo |
+| Pasos | `definir_modelos`, `evaluar`, `comparar` | ocho bloques numerados |
+| Pruebas estadisticas | no | si, paso 8 |
 | Para que sirve | correrlo y extenderlo | leerlo y explicarlo |
 
-`modelado_base.py` parte el trabajo en funciones (`definir_modelos`, `evaluar`, `comparar`) y
-toma las rutas de `config.py`. Suma una referencia tonta con `DummyClassifier`.
+`modelado_base.py` parte el trabajo en funciones y toma las rutas de `config.py`. Suma una
+referencia tonta con `DummyClassifier`.
 
-`modelado_secuencial.py` hace lo mismo en siete pasos numerados, sin definir ninguna funcion y
-declarando sus rutas y parametros arriba del archivo. Se lee de corrido, sin saltar a otro lado.
+`modelado_secuencial.py` recorre ocho pasos numerados, sin definir ninguna funcion y declarando
+sus rutas y parametros arriba del archivo. Se lee de corrido, sin saltar a otro lado. Los pasos 1
+al 7 hacen lo mismo que `modelado_base.py`; el 8 agrega las pruebas que verifican si las
+diferencias entre modelos son reales.
 
 ## Que hace el secuencial, paso por paso
 
@@ -168,6 +173,55 @@ Junta las metricas de los tres. Las cuatro que importan:
 La ultima fila es el dato mas util de la tabla. Es un modelo que contesta siempre "sobrevive",
 sin mirar nada, y acierta el **74.1%**. Por eso la exactitud sola no dice nada aca: el mejor
 modelo llega a 82.7% y no hacer nada ya da 74.1%.
+
+### Paso 8 — Pruebas no parametricas
+
+Los tres modelos dieron AUC distinto. Pero una diferencia en la tabla no es una diferencia real
+hasta que se prueba: puede ser casualidad de como cayo la particion. Este paso lo verifica.
+
+Se llaman **no parametricas** porque no asumen que las metricas sigan una campana de Gauss.
+En vez de comparar promedios comparan **rangos** (quien quedo primero, segundo y tercero) y
+**signos** (cuantas veces uno gano al otro). Es lo prudente con 10 mediciones.
+
+El paso tiene dos mitades, y estan las dos a proposito.
+
+**8a. Friedman y Wilcoxon, sobre entrenamiento.** Se arman 10 particiones y los tres modelos se
+miden en **las mismas**, para que las mediciones sean pareadas: cada particion es como un
+examen que los tres rindieron. Primero **Friedman** pregunta "hay alguna diferencia entre los
+tres?". Solo si contesta que si, **Wilcoxon** va a ver entre cuales. El orden importa: ir
+directo a comparar de a pares sin preguntar primero infla las chances de ver una diferencia que
+no existe.
+
+Como son tres comparaciones, el p-valor se multiplica por 3 (**correccion de Bonferroni**).
+Cuantas mas comparaciones se hacen, mas facil es que alguna de significativa por azar; multiplicar
+compensa eso.
+
+**8b. McNemar, sobre prueba.** Las 10 particiones de 8a comparten datos de entrenamiento, asi que
+no son del todo independientes y sus p-valores quedan optimistas. Por eso la segunda mitad usa el
+20% que ningun modelo vio, y compara paciente por paciente: de los casos donde los dos modelos
+difieren, cuantas veces acerto uno y cuantas el otro. Si fueran igual de buenos, deberia repartirse
+mitad y mitad.
+
+### Lo que dieron las pruebas
+
+| Comparacion | Wilcoxon (CV) | McNemar (prueba) |
+|---|---|---|
+| logistica vs arbol | 0.0059 * | 0.0139 * |
+| logistica vs vecinos | 0.0059 * | 0.0004 * |
+| arbol vs vecinos | 1.0000 | 0.7485 |
+
+Friedman da p=0.0006, o sea que si hay diferencias. Y los dos caminos coinciden:
+
+- **La logistica es mejor de verdad**, no por suerte. Gano en las 10 particiones, sin excepcion:
+  su rango promedio es 1.0 exacto.
+- **Arbol y vecinos son indistinguibles.** El arbol tiene mejor AUC (0.847 contra 0.835), pero la
+  diferencia no sobrevive a la prueba. Es la conclusion mas util del paso: en la tabla del paso 7
+  parecian distintos, y no lo son.
+
+Un detalle que conviene tener listo por si lo preguntan: los dos Wilcoxon dan **exactamente**
+0.0059. No es un error. Con 10 particiones, el p mas chico que puede dar la prueba es
+2/2^10 = 0.00195, y por Bonferroni x3 queda 0.0059. Es el piso: las dos comparaciones tocaron el
+minimo posible, que es otra forma de decir que la logistica gano las 10 veces.
 
 ## Lo que queda pendiente
 
