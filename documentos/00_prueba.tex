@@ -1,0 +1,125 @@
+\documentclass[11pt]{article}
+\usepackage{preambulo}
+\addbibresource{bibliografia.bib}
+
+\begin{document}
+
+\portada{Prueba de compilación del formato}
+
+\tableofcontents
+\newpage
+
+\section{Propósito del documento}
+
+Este archivo no constituye una entrega. Su función es verificar que el preámbulo y el flujo de
+compilación automática operan correctamente antes de redactar los documentos definitivos. Para
+ello se incorporan todos los elementos tipográficos que serán utilizados en los informes, de
+manera que cualquier componente ausente en la distribución de \TeX Live se manifieste en esta
+etapa y no durante la preparación de las entregas.
+
+El archivo se elimina una vez que los tres documentos se encuentren redactados.
+
+\section{Elementos verificados}
+
+\subsection{Tipografía y separación silábica}
+
+Precisión, imputación, codificación, estandarización, reducción de la dimensionalidad.
+La correcta aplicación de acentos y la separación silábica automática del idioma español
+constituyen un requisito para la legibilidad del documento final.
+
+\subsection{Notación numérica}
+
+El área bajo la curva de la regresión logística alcanzó un valor de $0.879$, mientras que el
+método de vecinos más cercanos obtuvo $0.835$. La comparación entre ambos mediante la prueba
+de McNemar arrojó $p = 0.0004$.
+
+\subsection{Tablas}
+
+La Tabla \ref{tab:resultados} presenta los resultados obtenidos sobre el conjunto de prueba.
+
+\begin{table}[H]
+\centering
+\caption{Resultados de los modelos sobre el conjunto de prueba}
+\label{tab:resultados}
+\small
+\begin{tabular}{p{4.5cm} r r r r}
+\toprule
+\textbf{Modelo} & \textbf{AUC} & \textbf{Exactitud} & \textbf{Precisión} & \textbf{Recall} \\
+\midrule
+Regresión logística   & 0.879 & 0.827 & 0.736 & 0.519 \\
+Árbol de decisión     & 0.847 & 0.807 & 0.701 & 0.447 \\
+Vecinos más cercanos  & 0.835 & 0.797 & 0.721 & 0.356 \\
+\midrule
+Referencia trivial    & 0.500 & 0.741 & 0.000 & 0.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Figuras}
+
+La Figura \ref{fig:clases} muestra la distribución de la variable objetivo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{prueba_clases.png}
+    \caption{Distribución de la clase objetivo en el conjunto de entrenamiento.}
+    \label{fig:clases}
+\end{figure}
+
+\subsection{Fragmentos de código}
+
+\begin{lstlisting}[caption={Ajuste del escalador únicamente con el conjunto de entrenamiento},label={lst:escalado}]
+escalador = StandardScaler()
+X_entrenamiento_escalado = escalador.fit_transform(X_entrenamiento)
+X_prueba_escalado = escalador.transform(X_prueba)
+\end{lstlisting}
+
+\subsection{Expresiones matemáticas}
+
+Los límites empleados para el acotamiento de valores atípicos se definen a partir del rango
+intercuartílico como
+
+\[
+L_{\text{inf}} = Q_1 - 1.5 \cdot \text{RIC},
+\qquad
+L_{\text{sup}} = Q_3 + 1.5 \cdot \text{RIC}
+\]
+
+\subsection{Algoritmos}
+
+\begin{algorithm}[H]
+\caption{Acotamiento de valores atípicos}
+\label{alg:acotar}
+\begin{algorithmic}[1]
+\Require Conjunto de entrenamiento $E$, conjunto de prueba $P$
+\Ensure Ambos conjuntos con valores acotados
+\For{cada columna numérica $c$}
+    \State Calcular $Q_1$ y $Q_3$ sobre $E$
+    \State $L_{\text{inf}} \gets Q_1 - 1.5 \cdot (Q_3 - Q_1)$
+    \State $L_{\text{sup}} \gets Q_3 + 1.5 \cdot (Q_3 - Q_1)$
+    \State Acotar $c$ en $E$ y en $P$ con los mismos límites
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Citas y bibliografía}
+
+El conjunto de datos proviene del repositorio UCI \parencite{uci_support2} y corresponde al
+estudio clínico descrito por \textcite{knaus1995support}. Las pruebas estadísticas empleadas
+para la comparación de clasificadores siguen los lineamientos de \textcite{demsar2006}. La
+implementación se realizó con la biblioteca \textit{scikit-learn} \parencite{scikit-learn}.
+
+\subsection{Enlaces}
+
+El repositorio del proyecto se encuentra disponible en
+\url{https://github.com/JozMdz/Realidad_Virtual}.
+
+\section{Criterio de verificación}
+
+La compilación se considera correcta si el documento generado incluye portada, índice,
+numeración de página en el margen inferior derecho, tablas numeradas en romanos, figura,
+fragmento de código, expresiones matemáticas, algoritmo y referencias en formato APA.
+
+\printbibliography[title={Referencias}]
+
+\end{document}

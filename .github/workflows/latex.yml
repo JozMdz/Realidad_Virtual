@@ -1,0 +1,36 @@
+name: Compilar documentos
+
+on:
+  push:
+    paths:
+      - 'documentos/**'
+      - '.github/workflows/latex.yml'
+  pull_request:
+    paths:
+      - 'documentos/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compilar:
+    name: LaTeX a PDF
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar el repositorio
+        uses: actions/checkout@v5
+
+      - name: Compilar los documentos
+        uses: xu-cheng/latex-action@v4
+        with:
+          working_directory: documentos
+          root_file: |
+            00_prueba.tex
+
+      - name: Publicar los PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentos-pdf
+          path: documentos/*.pdf
+          if-no-files-found: error
