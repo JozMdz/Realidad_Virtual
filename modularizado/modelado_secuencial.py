@@ -4,9 +4,11 @@ Pensado para leerse o explicarse de corrido, de arriba a abajo. Las rutas y los
 parametros se repiten aqui a proposito, para no tener que abrir config.py.
 """
 
+from itertools import combinations
 from pathlib import Path
 
 import pandas as pd
+from scipy.stats import binomtest, friedmanchisquare, wilcoxon
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     classification_report,
@@ -148,3 +150,66 @@ print("\n7. COMPARACION")
 print(comparacion.to_string(index=False))
 print(f"\n   Mejor por AUC: {comparacion.iloc[0]['modelo']}")
 print(f"   Referencia: contestar siempre 'sobrevive' acierta {1 - y_prueba.mean():.3f}")
+
+
+# 8. Pruebas no parametricas
+# No se asume normalidad de las metricas: se comparan rangos y signos.
+#
+# 8a. Friedman + Wilcoxon sobre validacion cruzada (solo con entrenamiento)
+# Cada modelo se evalua en las MISMAS 10 particiones, asi las mediciones son pareadas.
+# Friedman: H0 = los tres modelos tienen el mismo desempeno (equivale a un ANOVA de
+# medidas repetidas, pero con rangos). Si se rechaza, Wilcoxon por pares dice cuales difieren.
+# Ojo: las particiones comparten datos de entrenamiento, asi que no son del todo
+# independientes; los p-valores son orientativos.
+print("\n8. PRUEBAS NO PARAMETRICAS")
+particiones_10 = StratifiedKFold(n_splits=10, shuffle=True, random_state=SEMILLA)
+modelos_cv = {
+    "logistica": Pipeline([("escalado", StandardScaler()),
+                           ("modelo", LogisticRegression(max_iter=3000, random_state=SEMILLA))]),
+    "arbol": DecisionTreeClassifier(max_depth=PROFUNDIDAD_ARBOL, random_state=SEMILLA),
+    "vecinos": Pipeline([("escalado", StandardScaler()),
+                         ("modelo", KNeighborsClassifier(n_neighbors=VECINOS))]),
+}
+auc_por_particion = pd.DataFrame({
+    nombre: cross_val_score(modelo, X_entrenamiento, y_entrenamiento,
+                            cv=particiones_10, scoring="roc_auc")
+    for nombre, modelo in modelos_cv.items()
+})
+
+print("   AUC por particion (10 particiones):")
+print(auc_por_particion.round(3).to_string())
+print("\n   Rango promedio (1 = mejor):")
+print(auc_por_particion.rank(axis=1, ascending=False).mean().round(2).to_string())
+
+estadistico, p_friedman = friedmanchisquare(*[auc_por_particion[c] for c in auc_por_particion])
+print(f"\n   Friedman: chi2={estadistico:.3f}  p={p_friedman:.4f}")
+print("   -> Hay diferencias entre modelos" if p_friedman < 0.05
+      else "   -> No hay evidencia de diferencias entre modelos")
+
+# Wilcoxon de rangos con signo por pares, con correccion de Bonferroni (3 comparaciones)
+print("\n   Wilcoxon por pares (p corregido con Bonferroni x3):")
+for a, b in combinations(auc_por_particion.columns, 2):
+    _, p = wilcoxon(auc_por_particion[a], auc_por_particion[b])
+    p_corregido = min(p * 3, 1.0)
+    marca = "*" if p_corregido < 0.05 else ""
+    print(f"     {a:>9} vs {b:<9}  p={p_corregido:.4f} {marca}")
+
+
+# 8b. McNemar sobre el conjunto de prueba
+# Compara dos clasificadores sobre los mismos pacientes: solo cuentan los casos
+# donde uno acierta y el otro falla (b y c). H0 = ambos se equivocan igual de seguido.
+# Se usa la version exacta: bajo H0, b ~ Binomial(b + c, 0.5).
+aciertos = {
+    "logistica": logistica.predict(X_prueba_escalado) == y_prueba,
+    "arbol": arbol.predict(X_prueba) == y_prueba,
+    "vecinos": vecinos.predict(X_prueba_escalado) == y_prueba,
+}
+print("\n   McNemar exacto sobre prueba (p corregido con Bonferroni x3):")
+for a, b in combinations(aciertos, 2):
+    solo_a = int((aciertos[a] & ~aciertos[b]).sum())
+    solo_b = int((~aciertos[a] & aciertos[b]).sum())
+    p = binomtest(solo_a, solo_a + solo_b, 0.5).pvalue
+    p_corregido = min(p * 3, 1.0)
+    marca = "*" if p_corregido < 0.05 else ""
+    print(f"     {a:>9} vs {b:<9}  solo {a} acierta={solo_a:>3}  "
+          f"solo {b} acierta={solo_b:>3}  p={p_corregido:.4f} {marca}")
