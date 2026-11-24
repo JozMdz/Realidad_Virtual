@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clonar el repositorio
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Compilar los documentos
         uses: xu-cheng/latex-action@v4
