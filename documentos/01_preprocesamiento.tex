@@ -319,15 +319,17 @@ con 47.9\%. Un umbral del 45\% habría excluido ambas.
 \subsection{Tratamiento de valores atípicos}
 
 El tratamiento de valores extremos se realizó mediante el criterio del rango intercuartílico. A
-partir del primer y tercer cuartil de cada columna se definen los límites
+partir del primer y tercer cuartil de cada columna se definen los límites de la
+Ecuación \eqref{eq:ric}:
 
-\[
+\begin{equation}
 L_{\text{inf}} = Q_1 - 1.5 \cdot \text{RIC},
 \qquad
 L_{\text{sup}} = Q_3 + 1.5 \cdot \text{RIC},
 \qquad
 \text{RIC} = Q_3 - Q_1
-\]
+\label{eq:ric}
+\end{equation}
 
 Los valores situados fuera de dicho intervalo no se eliminaron sino que se acotaron al límite
 correspondiente. Esta decisión preserva el tamaño del conjunto: la eliminación de registros

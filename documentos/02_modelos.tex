@@ -67,11 +67,12 @@ La Tabla \ref{tab:configuracion} resume la configuración de los cuatro.
 
 La regresión logística asigna un coeficiente a cada variable de entrada, calcula la suma ponderada
 de los valores del paciente y transforma dicha suma en una probabilidad mediante la función
-logística:
+logística de la Ecuación \eqref{eq:logistica}:
 
-\[
+\begin{equation}
 P(\text{fallece}) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 x_1 + \cdots + \beta_n x_n)}}
-\]
+\label{eq:logistica}
+\end{equation}
 
 El resultado se interpreta directamente como probabilidad de fallecimiento. Un coeficiente
 positivo indica que valores mayores de esa variable incrementan el riesgo estimado; uno negativo,
@@ -173,12 +174,14 @@ según la distancia euclidiana y asigna la categoría mayoritaria entre ellos.
 
 \subsection{Necesidad de estandarización}
 
-En este método la estandarización no constituye una mejora sino un requisito. La distancia
-euclidiana agrega las diferencias de todas las variables en un único valor:
+En este método la estandarización no constituye una mejora sino un requisito. Como muestra la
+Ecuación \eqref{eq:distancia}, la distancia euclidiana agrega las diferencias de todas las
+variables en un único valor:
 
-\[
+\begin{equation}
 d(a, b) = \sqrt{\sum_{i=1}^{n} (a_i - b_i)^2}
-\]
+\label{eq:distancia}
+\end{equation}
 
 Sin estandarización, las variables de mayor recorrido dominan la suma. La glucosa abarca un
 intervalo de aproximadamente 318 unidades, mientras que el pH se desplaza entre 7.25 y 7.60: una
