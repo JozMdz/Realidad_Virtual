@@ -19,7 +19,10 @@ anterior: regresión logística, árbol de decisión y vecinos más cercanos, ac
 de referencia que predice siempre la clase mayoritaria.
 
 La evaluación se realizó sobre el conjunto de prueba, conformado por 1{,}821 registros que no
-intervinieron en ninguna etapa del entrenamiento ni en la selección de parámetros. La estabilidad
+intervinieron en el entrenamiento de los modelos ni en la elección de sus hiperparámetros, fijados
+por validación cruzada sobre el conjunto de entrenamiento. Debe señalarse que las comparaciones
+sobre reducción de dimensionalidad del informe de preprocesamiento sí se evaluaron sobre este
+mismo conjunto, de modo que la decisión de conservar las 40 variables no es independiente de él. La estabilidad
 de los resultados se verificó adicionalmente mediante validación cruzada sobre el conjunto de
 entrenamiento.
 
@@ -63,9 +66,10 @@ corresponde a los pacientes que fallecen y constituye el objeto de interés.
 \end{itemize}
 
 La distinción entre precisión y recall resulta central en este problema. La primera cuantifica el
-costo de las falsas alarmas; la segunda, el de los casos no detectados. En un contexto clínico
-ambos errores tienen consecuencias distintas, por lo que resumirlos en un único valor oculta
-información relevante para la decisión.
+costo de las falsas alarmas; la segunda, el de los casos no detectados. Los dos tipos de error no
+son intercambiables y su costo relativo depende del contexto de aplicación, que este trabajo no
+determina, por lo que resumirlos en un único valor oculta información relevante para la
+decisión.
 
 %============================================================================
 \section{Resultados sobre el conjunto de prueba}
@@ -151,8 +155,11 @@ particiones, los promedios de ambos difieren en 0.000043, de modo que no resulta
 partir de estos valores.
 
 Los promedios de la validación cruzada resultan inferiores a los obtenidos sobre el conjunto de
-prueba. La diferencia es esperable: cada partición entrena con el 90\% de los registros de
-entrenamiento, mientras que el modelo final dispone de su totalidad.
+prueba: 0.854 frente a 0.879 en la regresión logística. La diferencia excede lo atribuible al
+tamaño del entrenamiento, pues reentrenar con el 90\% de los registros en lugar de su totalidad
+modifica el AUC sobre prueba en menos de una milésima. Corresponde por tanto a variación propia de
+la partición evaluada, de modo que el valor de 0.879 conviene leerse como el obtenido sobre una
+partición concreta y no como la expectativa del modelo.
 
 %============================================================================
 \section{Pruebas de significancia estadística}
@@ -165,9 +172,9 @@ si corresponden a diferencias reales requiere pruebas estadísticas.
 
 Se emplearon pruebas no paramétricas, que no presuponen que las métricas sigan una distribución
 normal. En lugar de comparar promedios, comparan rangos —qué modelo quedó primero, segundo y
-tercero en cada medición— y signos —cuántas veces uno superó a otro—. Con diez mediciones, la
-hipótesis de normalidad no resulta verificable, de modo que esta familia de pruebas es la
-apropiada.
+tercero en cada medición— y signos —cuántas veces uno superó a otro—. Con diez mediciones, una prueba de
+normalidad tendría poca potencia, de modo que se prefirió no asumirla y emplear pruebas basadas en
+rangos y signos.
 
 El procedimiento consta de dos partes, aplicadas sobre conjuntos distintos.
 
@@ -232,13 +239,13 @@ regresión logística superó a los otros dos modelos en la totalidad de las par
 El mejor modelo identifica el 51.9\% de los pacientes que fallecen. Dado que detectar esos casos
 constituye el propósito del clasificador, el resultado requiere análisis.
 
-La causa reside en el desbalance de clases. Al representar los fallecimientos una cuarta parte de
-los registros, el procedimiento de optimización encuentra ventajoso inclinarse hacia la categoría
-mayoritaria: equivocarse en la clase minoritaria resulta menos costoso en términos del criterio
-que el modelo minimiza.
+El resultado es consistente con el desbalance de clases: al representar los fallecimientos una
+cuarta parte de los registros, el umbral predeterminado de 0.5 deja fuera a buena parte de la
+clase minoritaria.
 
 Una corrección consiste en ponderar las clases de forma inversa a su frecuencia, de modo que los
-errores sobre la clase minoritaria pesen más durante el entrenamiento. La Tabla \ref{tab:balanceo}
+errores sobre la clase minoritaria pesen más durante el entrenamiento y el punto de operación se
+desplace. La Tabla \ref{tab:balanceo}
 presenta el efecto sobre la regresión logística.
 
 \input{tablas/balanceo.tex}

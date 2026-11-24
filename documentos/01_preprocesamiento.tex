@@ -187,7 +187,7 @@ hospitalización tiene valor en esta columna.
 
 Las variables \texttt{surv2m} y \texttt{surv6m} corresponden a la probabilidad de supervivencia
 estimada por el modelo estadístico del propio estudio SUPPORT, mientras que \texttt{prg2m} y
-\texttt{prg6m} recogen la estimación subjetiva formulada por el médico tratante. Su incorporación
+\texttt{prg6m} recogen la estimación del médico consignada en el conjunto. Su incorporación
 como variables de entrada implicaría reproducir el resultado de un modelo previo o el juicio de un
 especialista, en lugar de aprender a partir de las mediciones clínicas.
 
@@ -197,27 +197,30 @@ Un segundo conjunto de columnas registra información generada durante la hospit
 valor definitivo sólo se conoce una vez concluido el episodio.
 
 Las variables \texttt{charges}, \texttt{totcst} y \texttt{totmcst} corresponden al cobro y al
-costo total de la hospitalización. Estas cifras se consolidan al momento del alta, de modo que no
-se encuentran disponibles mientras el paciente permanece internado. La diferencia observada entre
-grupos resulta considerable: el cobro promedio asciende a 92{,}639 unidades monetarias entre los
-pacientes fallecidos frente a 48{,}684 entre los sobrevivientes, diferencia atribuible a la
-duración y la intensidad del episodio.
+costo total de la hospitalización. Un cobro total no constituye un dato disponible mientras el
+paciente permanece internado. La diferencia observada entre grupos resulta considerable: el cobro
+promedio asciende a 92{,}639 unidades monetarias entre los pacientes fallecidos frente a 48{,}684
+entre los sobrevivientes. El archivo distribuido no incluye la duración de la estancia
+(\texttt{slos} y \texttt{d.time} figuran en la ficha pero no en los datos), de modo que la
+diferencia no puede descomponerse.
 
 La variable \texttt{avtisst} corresponde al promedio del puntaje de intervenciones terapéuticas
-entre los días 3 y 25 del estudio. Al promediarse a lo largo de la estancia, su valor queda
-determinado por la duración de esta última.
+entre los días 3 y 25 del estudio. La ventana del promedio se extiende más allá del ingreso, por
+lo que su valor incorpora intervenciones registradas durante la hospitalización y no está
+disponible en el momento en que debe emitirse la predicción.
 
 Las variables \texttt{dnr} y \texttt{dnrday} registran la orden de no reanimar y la fecha en que
-fue suscrita. Esta orden no constituye un dato clínico de ingreso sino una decisión adoptada
-durante la hospitalización, con frecuencia cuando el equipo médico ya ha constatado el deterioro
-del paciente. La Tabla \ref{tab:dnr} evidencia esta relación.
+fue suscrita. Esta orden no constituye un dato registrado al ingreso: la ficha
+oficial distingue entre las suscritas antes y después de la incorporación al estudio, y la mayoría
+corresponde a la segunda categoría. La Tabla \ref{tab:dnr} evidencia esta relación.
 
 \input{tablas/dnr.tex}
 
 Entre los pacientes que fallecen durante la hospitalización, el 77.9\% cuenta con una orden
-suscrita con posterioridad al ingreso, frente al 16.8\% de quienes sobreviven. Esta asociación no
-refleja una capacidad predictiva de la variable sino la anticipación del desenlace por parte del
-personal médico.
+suscrita con posterioridad al ingreso, frente al 16.8\% de quienes sobreviven. La magnitud de esta asociación, junto con el
+hecho de que la orden se suscribe después del momento en que el modelo debería emitir su
+predicción, es lo que motiva la exclusión. El material disponible no permite determinar en qué
+medida la orden refleja el estado del paciente o anticipa el desenlace.
 
 Se conservó en cambio la variable \texttt{hday}, correspondiente al día de hospitalización en que
 el paciente ingresó al estudio. Aunque presenta diferencias entre grupos, su valor se conoce en el
@@ -240,9 +243,9 @@ información y, adicionalmente, imputar el 31\% de valores ausentes que presenta
 original. Se conservó \texttt{adlsc}.
 
 Se evaluó asimismo la relación entre \texttt{sps} y \texttt{aps}, ambos puntajes de severidad
-medidos al tercer día. La correlación observada fue de 0.798: elevada, pero suficientemente
-inferior a la unidad como para descartar que se trate de mediciones equivalentes. Ambas fueron
-conservadas.
+medidos al tercer día. La correlación observada fue de 0.798: elevada, pero distante de la
+unidad. No se adoptó un umbral formal de redundancia, de modo que la decisión de conservar ambas
+queda declarada como criterio y no como resultado de una prueba.
 
 Cabe señalar que la ficha oficial describe tanto \texttt{scoma} como \texttt{sps} con la
 expresión \textit{predicted by a model}, al igual que las estimaciones de supervivencia
@@ -274,21 +277,24 @@ La diferencia es considerable, pero por sí sola no indica cuál de los dos valo
 Para interpretarla hace falta un punto de comparación obtenido sobre los mismos datos.
 
 El conjunto ofrece uno. Entre sus columnas figuran las estimaciones producidas por el modelo
-pronóstico del propio estudio SUPPORT y por el médico tratante, que pueden evaluarse directamente
+pronóstico del propio estudio SUPPORT y la del médico, que pueden evaluarse directamente
 frente a \texttt{hospdead}.
 
 \input{tablas/referencia.tex}
 
-El modelo del estudio alcanza 0.841 y el médico tratante 0.814. El valor de 0.879 obtenido tras
-excluir las variables posteriores al ingreso se sitúa en ese mismo orden, resultado esperable para
-un modelo construido sobre información clínica de base.
+El modelo del estudio alcanza 0.841 y la estimación del médico 0.814. La comparación es
+indicativa y no estricta: ambas estimaciones se refieren a la supervivencia a dos y seis meses, se
+evalúan aquí frente a un desenlace distinto, y se calculan sobre la totalidad del archivo y no
+sobre el conjunto de prueba. Restringidas a ese conjunto alcanzan 0.857 y 0.841 respectivamente,
+de modo que la conclusión no depende del alcance elegido.
 
-El valor de 0.948 supera a ambos por más de diez puntos. Un clasificador que dispone únicamente de
-mediciones registradas al tercer día no debería aventajar de ese modo a quienes observaron la
-evolución completa del paciente. Esa desproporción es el indicio de que el desempeño no proviene
-de la información clínica, sino de columnas que recogen lo ya ocurrido.
+El valor de 0.879 obtenido tras excluir las variables posteriores al ingreso se sitúa en ese mismo
+orden de magnitud. El de 0.948 lo supera por más de nueve puntos.
 
-La exclusión, por tanto, no reduce la capacidad del modelo: elimina una ventaja que no era suya.
+Lo que motiva la exclusión no es sin embargo esa comparación, sino la disponibilidad de la
+información: las seis columnas registran hechos posteriores al ingreso y no estarían al alcance
+del modelo en el momento en que debe emitir la predicción. La exclusión reduce el AUC medido de
+0.948 a 0.879, y lo que se pierde es desempeño que no sería reproducible en uso real.
 
 %============================================================================
 \section{Limpieza}
@@ -404,8 +410,8 @@ La codificación incrementó el número de columnas de 29 a 41.
 
 Las variables del conjunto resultante conservan sus unidades originales, que difieren
 considerablemente entre sí: la edad se expresa en años y abarca de 21 a 102; el pH, en unidades
-logarítmicas, se concentra en un rango intercuartílico inferior a una décima; y la glucosa, en
-miligramos por decilitro, alcanza valores de tres cifras.
+logarítmicas, se concentra en un rango intercuartílico inferior a una décima; y la glucosa alcanza
+valores de tres cifras, hasta 318 tras el acotamiento.
 
 La estandarización no se aplicó durante el preprocesamiento sino que se incorporó al procedimiento
 de modelado, por dos motivos. El primero es que su necesidad depende del algoritmo: los métodos
@@ -439,11 +445,16 @@ Los resultados no respaldan la aplicación del método. El primer componente exp
 varianza requiere 24 de los 40 componentes disponibles, y el 90\% requiere 29. Una reducción de 40
 a 24 dimensiones no constituye una compresión que justifique la pérdida de interpretabilidad.
 
-La explicación reside en la estructura del conjunto. El análisis de componentes principales resume
-eficazmente variables correlacionadas entre sí, condición que no se verifica en estos datos: las
-mediciones clínicas son en buena medida independientes, dado que la creatinina no informa sobre la
-concentración de sodio ni ésta sobre la temperatura. Las diecisiete columnas indicadoras generadas
-por la codificación son, además, aproximadamente ortogonales por construcción.
+Una explicación compatible con el resultado se encuentra en la estructura de correlaciones del
+conjunto. El análisis de componentes principales resume eficazmente variables correlacionadas
+entre sí, y en estos datos las correlaciones son en general bajas: entre las veintiuna variables
+continuas, la mediana del valor absoluto del coeficiente es 0.049, con pocas excepciones
+(\texttt{sps}--\texttt{aps}, 0.805, y \texttt{crea}--\texttt{bun}, 0.582).
+
+Las diecisiete columnas indicadoras aportan además varianza difícil de comprimir, aunque por el
+motivo contrario: las que proceden de una misma variable categórica son mutuamente excluyentes y
+por tanto están correlacionadas de forma negativa, hasta $-0.832$ entre \texttt{race\_white} y
+\texttt{race\_black}. Esa dependencia no las agrupa en pocos componentes.
 
 \subsection{Comparación con otra forma de reducir}
 
@@ -471,8 +482,9 @@ Las quince más informativas resultaron ser los tres puntajes de severidad \text
 grupo diagnóstico y el indicador de presencia de cáncer.
 
 Aun así, la reducción no se incorporó al conjunto final. Con 40 variables el entrenamiento no
-presenta dificultades de cómputo ni indicios de sobreajuste, de manera que simplificar respondería
-a una preferencia y no a una necesidad verificada.
+presenta dificultades de cómputo, y el árbol de decisión obtiene un AUC de 0.848 sobre
+entrenamiento frente a 0.847 sobre prueba, diferencia que no sugiere sobreajuste. Simplificar
+respondería por tanto a una preferencia y no a una necesidad verificada.
 
 Resta declarar una reserva: el análisis de componentes principales se aplicó sobre un conjunto que
 mezcla variables continuas con indicadoras de valor cero o uno, donde la varianza no significa lo
@@ -520,8 +532,8 @@ habría ocurrido con el orden inverso.
 
 El caso de \texttt{glucose} resulta ilustrativo. Calculados sobre los valores efectivamente
 medidos, los límites abarcan el intervalo de $-26.0$ a $318.0$; calculados tras la imputación, se
-reducen a $131.0$ y $139.0$. Un registro con glucosa de 300 miligramos por decilitro, valor
-clínicamente relevante, quedaría reducido a 139 bajo el segundo procedimiento.
+reducen a $131.0$ y $139.0$. Un registro con glucosa de 300, valor presente en los datos medidos
+y muy por encima de la mediana de 135, quedaría reducido a 139 bajo el segundo procedimiento.
 
 El contraste con \texttt{crea} confirma el diagnóstico: al presentar únicamente 0.6\% de valores
 ausentes, sus límites resultan idénticos bajo ambos órdenes. La distorsión es, por tanto,
@@ -529,8 +541,9 @@ atribuible a la imputación previa y no al criterio del rango intercuartílico.
 
 Considerando la totalidad de las columnas evaluadas, el orden correcto acota 6{,}477 registros,
 mientras que el orden inverso acotaría 18{,}507, aproximadamente el triple. La diferencia no
-corresponde a valores atípicos adicionales detectados, sino a mediciones legítimas suprimidas por
-unos límites mal estimados.
+corresponde a valores atípicos adicionales detectados, sino a valores situados dentro del recorrido
+observado de la variable, que unos límites estimados sobre datos ya imputados sitúan fuera de
+rango.
 
 %============================================================================
 \section{Validación del resultado}
@@ -577,15 +590,17 @@ La primera fue la exclusión de catorce columnas por fuga de información. Seis 
 —\texttt{dnr}, \texttt{dnrday}, \texttt{charges}, \texttt{totcst}, \texttt{totmcst} y
 \texttt{avtisst}— registran hechos posteriores al ingreso, y su presencia elevaba el área bajo la
 curva de 0.879 a 0.948, valor que supera tanto al modelo pronóstico del propio estudio (0.841)
-como a la estimación del médico tratante (0.814).
+como a la estimación del médico consignada en el conjunto (0.814).
 
 La segunda fue el orden entre el acotamiento de valores atípicos y la imputación. El orden
 inverso, aparentemente equivalente, habría acotado 18{,}507 registros en lugar de 6{,}477,
-suprimiendo mediciones legítimas en las columnas con mayor proporción de datos ausentes.
+suprimiendo valores dentro del recorrido observado en las columnas con mayor proporción de datos
+ausentes.
 
 Ambas decisiones comparten una característica: no producen error visible. Un preprocesamiento que
-incurriera en cualquiera de ellas generaría archivos con la forma correcta, sin valores faltantes y
-que superarían la totalidad de las comprobaciones de la Sección \ref{sec:validacion}. La primera
+incurriera en cualquiera de ellas generaría archivos que ninguna de las comprobaciones de la
+Sección \ref{sec:validacion} podría rechazar, dado que todas verifican la forma del resultado y
+ninguna el significado de las columnas ni el orden de las operaciones. La primera
 produciría además un modelo aparentemente superior. Su detección requiere examinar el significado
 de cada variable y el momento en que cada operación se ejecuta, no la forma del resultado.
 

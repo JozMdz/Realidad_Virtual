@@ -129,10 +129,11 @@ decisión debe justificarse.
 
 \subsection{Profundidad}
 
-La profundidad máxima se fijó en cinco niveles. Un árbol sin restricción de profundidad continúa
-dividiendo hasta aislar casos individuales, con lo que reproduce el conjunto de entrenamiento en
-lugar de generalizar. El límite de cinco niveles produce un árbol de 32 hojas, cantidad que
-conserva la posibilidad de inspección.
+La profundidad máxima se fijó en cinco niveles. Sobre este conjunto, un árbol sin restricción de
+profundidad alcanza 24 niveles y 902 hojas, y obtiene un AUC de 1.000 sobre entrenamiento frente a
+0.661 sobre prueba: reproduce los datos de entrenamiento en lugar de generalizar. El límite de
+cinco niveles produce un árbol de 32 hojas, cantidad que además conserva la posibilidad de
+inspección.
 
 \subsection{Estructura obtenida}
 
@@ -147,17 +148,17 @@ y 32 hojas.}
 \end{figure}
 
 La primera división utiliza \texttt{aps} con un umbral de 50.5, y las divisiones subsiguientes
-recurren a \texttt{scoma} y \texttt{sps}. La regla inicial puede enunciarse directamente: los
-pacientes cuyo puntaje de fisiología APACHE III supera 50.5 presentan un riesgo sustancialmente
-mayor.
+recurren a \texttt{scoma} y \texttt{sps}. La regla inicial puede enunciarse directamente: el
+árbol separa primero por \texttt{aps} en el umbral 50.5, y la proporción de fallecimientos
+observada en la rama superior es de 0.592 frente a 0.162 en la inferior.
 
 \subsection{Ausencia de estandarización}
 
 El árbol se entrenó sobre las variables en sus unidades originales, sin estandarizar. La
 estandarización resta la media y divide por la desviación, operación que no altera el orden
 relativo de los valores. Dado que el árbol únicamente compara cada valor contra un umbral,
-selecciona la misma división y produce idénticos resultados sobre datos estandarizados o sin
-estandarizar.
+selecciona la misma división. La comprobación sobre estos datos lo confirma: entrenado con y sin
+estandarización produce las mismas 1{,}821 predicciones y el mismo AUC de 0.847.
 
 Aplicar la transformación no modificaría el resultado y sugeriría una dependencia que no existe.
 Se omite por ese motivo.
@@ -212,14 +213,18 @@ El AUC aumenta de forma sostenida con el número de vecinos: 0.762 con cinco vec
 veinticinco y 0.833 con doscientos uno. La ausencia de un máximo dentro del intervalo evaluado
 merece interpretación.
 
-El comportamiento es atribuible a la dimensionalidad del conjunto. Con 40 variables de entrada,
-las distancias entre registros tienden a homogeneizarse y la noción de proximidad pierde capacidad
-discriminante. El modelo compensa esa pérdida promediando sobre vecindarios cada vez más amplios,
-procedimiento que se aproxima progresivamente a estimar la proporción global de la clase.
+Caben al menos dos lecturas. Una es que, con una clase positiva del 25.9\%, los vecindarios más
+amplios producen estimaciones de probabilidad más suaves y el AUC premia el ordenamiento
+resultante. Otra es que las 40 variables de entrada degradan la capacidad discriminante de la
+distancia euclidiana, de modo que el método compensa promediando sobre vecindarios mayores.
 
-Se adoptó $k = 25$ por constituir un valor intermedio que conserva el carácter local del método.
-La elección implica renunciar a aproximadamente 0.016 puntos de AUC respecto del mejor valor
-evaluado.
+El material de este trabajo no permite separar ambas explicaciones, y una comprobación resta
+respaldo a la segunda: el ascenso sostenido persiste al repetir la búsqueda sobre las quince
+variables más informativas, de modo que no es específico de las 40 dimensiones.
+
+Se adoptó $k = 25$ por constituir un valor intermedio que conserva el carácter local del método,
+y no por haber identificado la causa del comportamiento. La elección implica renunciar a
+aproximadamente 0.016 puntos de AUC respecto del mejor valor evaluado.
 
 %============================================================================
 \section{Modelo de referencia}
@@ -301,12 +306,12 @@ desbalanceados.
 Cada modelo presenta un perfil distinto. La regresión logística combina el mejor desempeño con la
 posibilidad de examinar el peso asignado a cada variable. El árbol admite una lectura directa como
 secuencia de reglas, a costa de aproximadamente tres centésimas de AUC. El método de vecinos
-resulta el menos apropiado para este conjunto, no por configuración deficiente sino porque la
-dimensionalidad degrada la noción de proximidad en que se sustenta.
+obtiene el menor desempeño de los tres, sin que el material disponible permita atribuirlo a la
+dimensionalidad más que a otras causas.
 
-La convergencia de los tres en los mismos puntajes de severidad constituye el hallazgo de mayor
-relevancia: indica que el desempeño obtenido proviene de la información contenida en los datos y
-no de la elección del procedimiento.
+La convergencia de los tres en los mismos puntajes de severidad es el hallazgo de mayor interés:
+resulta consistente con que el desempeño provenga de la información contenida en los datos y no de
+la elección del procedimiento, aunque no lo demuestra.
 
 La determinación de si las diferencias observadas entre los tres modelos son estadísticamente
 significativas requiere pruebas específicas, que se desarrollan en el informe de evaluación.
