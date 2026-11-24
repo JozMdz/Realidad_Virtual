@@ -86,13 +86,15 @@ Los pacientes se distribuyen en ocho grupos diagnósticos: insuficiencia respira
 sepsis, insuficiencia cardíaca congestiva, enfermedad pulmonar obstructiva crónica, cirrosis,
 cáncer de colon, cáncer de pulmón, coma y fallo multiorgánico con neoplasia.
 
-La ficha oficial del repositorio asigna a cada variable un rol: cuarenta y dos figuran como
-variables de entrada, tres como variables objetivo y dos como información auxiliar no utilizable
-para predicción. Por su contenido, las variables de entrada corresponden a datos demográficos y
+La ficha oficial del repositorio documenta cuarenta y siete variables y asigna a cada una un rol:
+cuarenta y dos como variables de entrada, tres como variables objetivo y dos como información
+auxiliar no utilizable para predicción. Estas dos últimas, \texttt{slos} y \texttt{d.time}, no
+están presentes en el archivo distribuido, que contiene por tanto las cuarenta y cinco
+restantes. Por su contenido, las variables de entrada corresponden a datos demográficos y
 de contexto social, información diagnóstica, puntajes de severidad medidos al tercer día del
 estudio, signos vitales y resultados de laboratorio, e indicadores de funcionalidad en
-actividades de la vida diaria. La Tabla \ref{tab:variables} presenta la totalidad de las
-variables con su rol, descripción, tipo y proporción de valores ausentes.
+actividades de la vida diaria. La Tabla \ref{tab:variables} presenta las cuarenta y cinco
+variables del archivo con su rol, descripción, tipo y proporción de valores ausentes.
 
 \input{tablas/variables.tex}
 
@@ -173,10 +175,15 @@ seguimiento, período que puede extenderse durante años. Dado que todo paciente
 la hospitalización fallece necesariamente dentro del seguimiento, ambas variables responden
 esencialmente a la misma pregunta.
 
-La variable \texttt{sfdm2} consigna el nivel de discapacidad funcional evaluado mediante una
-entrevista realizada aproximadamente dos meses después del ingreso. Dicha entrevista sólo pudo
-realizarse a los pacientes que sobrevivieron hasta esa fecha, por lo que la mera presencia de un
-valor en esta columna constituye un indicador de supervivencia.
+La variable \texttt{sfdm2} consigna el nivel de discapacidad funcional evaluado en un seguimiento
+posterior al ingreso. Entre sus categorías figura \texttt{<2 mo. follow-up}, que registra
+precisamente a los pacientes que no alcanzaron los dos meses de seguimiento y que constituye la
+categoría más frecuente, con 3{,}123 casos.
+
+La columna informa por tanto sobre el desenlace de manera directa. Entre los registros con valor
+en \texttt{sfdm2}, la tasa de fallecimiento hospitalario es del 30.2\%, mientras que entre los
+registros sin valor desciende al 2.4\%. El 98.6\% de los pacientes fallecidos durante la
+hospitalización tiene valor en esta columna.
 
 Las variables \texttt{surv2m} y \texttt{surv6m} corresponden a la probabilidad de supervivencia
 estimada por el modelo estadístico del propio estudio SUPPORT, mientras que \texttt{prg2m} y
@@ -396,9 +403,9 @@ La codificación incrementó el número de columnas de 29 a 41.
 \subsection{Estandarización de escalas}
 
 Las variables del conjunto resultante conservan sus unidades originales, que difieren
-considerablemente entre sí: la edad se expresa en años, el pH en unidades logarítmicas con un
-recorrido inferior a una décima, y la glucosa en miligramos por decilitro con valores de tres
-cifras.
+considerablemente entre sí: la edad se expresa en años y abarca de 21 a 102; el pH, en unidades
+logarítmicas, se concentra en un rango intercuartílico inferior a una décima; y la glucosa, en
+miligramos por decilitro, alcanza valores de tres cifras.
 
 La estandarización no se aplicó durante el preprocesamiento sino que se incorporó al procedimiento
 de modelado, por dos motivos. El primero es que su necesidad depende del algoritmo: los métodos
@@ -435,8 +442,8 @@ a 24 dimensiones no constituye una compresión que justifique la pérdida de int
 La explicación reside en la estructura del conjunto. El análisis de componentes principales resume
 eficazmente variables correlacionadas entre sí, condición que no se verifica en estos datos: las
 mediciones clínicas son en buena medida independientes, dado que la creatinina no informa sobre la
-concentración de sodio ni ésta sobre la temperatura. Las doce columnas indicadoras generadas por
-la codificación son, además, aproximadamente ortogonales por construcción.
+concentración de sodio ni ésta sobre la temperatura. Las diecisiete columnas indicadoras generadas
+por la codificación son, además, aproximadamente ortogonales por construcción.
 
 \subsection{Comparación con otra forma de reducir}
 
@@ -450,17 +457,18 @@ hacía falta.
 
 \input{tablas/reduccion.tex}
 
-La selección directa supera a los componentes principales en todos los tamaños evaluados. Con 30
-variables alcanza 0.8798, valor ligeramente superior al obtenido con las 40 disponibles, lo que
-indica que una parte de las variables no está aportando.
+La selección directa supera a los componentes principales en los cinco tamaños reducidos; en la
+fila de 40 variables ambos coinciden, dado que allí no hay reducción. Con 30 variables alcanza
+0.8798, valor ligeramente superior al obtenido con las 40 disponibles.
 
 La diferencia de fondo entre ambos procedimientos no está en el desempeño sino en lo que queda
 después. Los componentes principales producen combinaciones de variables que no corresponden a
 ninguna magnitud clínica; la selección directa conserva las variables originales, de modo que el
 modelo sigue pudiendo describirse en términos de puntajes de gravedad y resultados de laboratorio.
 Las quince más informativas resultaron ser los tres puntajes de severidad \texttt{scoma},
-\texttt{sps} y \texttt{aps}, el día de ingreso al estudio, cuatro mediciones de laboratorio, el
-índice de funcionalidad y seis indicadores de grupo diagnóstico.
+\texttt{sps} y \texttt{aps}, el día de ingreso al estudio, tres mediciones de laboratorio
+(\texttt{alb}, \texttt{bili} y \texttt{crea}), el índice de funcionalidad, seis indicadores de
+grupo diagnóstico y el indicador de presencia de cáncer.
 
 Aun así, la reducción no se incorporó al conjunto final. Con 40 variables el entrenamiento no
 presenta dificultades de cómputo ni indicios de sobreajuste, de manera que simplificar respondería
