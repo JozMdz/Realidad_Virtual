@@ -1,0 +1,292 @@
+\documentclass[11pt]{article}
+\usepackage{preambulo}
+\addbibresource{bibliografia.bib}
+
+\begin{document}
+
+\portada{Preprocesamiento de la instancia}
+
+\tableofcontents
+\newpage
+
+%============================================================================
+\section{Introducción y objetivo del preprocesamiento}
+%============================================================================
+
+El presente documento describe el preprocesamiento aplicado al conjunto de datos SUPPORT2
+\parencite{uci_support2}, correspondiente al estudio clínico sobre pronóstico de pacientes
+hospitalizados con enfermedades graves descrito por \textcite{knaus1995support}. El objetivo del
+procedimiento consistió en transformar el archivo original, que presenta valores ausentes,
+variables categóricas en texto y columnas no utilizables, en dos conjuntos numéricos y completos
+aptos para el entrenamiento y la evaluación de un modelo de clasificación binaria.
+
+La variable objetivo seleccionada fue \texttt{hospdead}, que indica si el paciente falleció
+durante la hospitalización analizada. La elección de esta variable condiciona la totalidad del
+preprocesamiento, dado que determina cuáles columnas constituyen información legítima de entrada
+y cuáles anticipan el desenlace que se pretende predecir.
+
+El procedimiento se implementó en once etapas secuenciales e independientes, denominadas lotes,
+cada una de las cuales recibe el resultado de la anterior y produce un archivo intermedio. Esta
+organización permite ejecutar o revisar cualquier etapa de manera aislada sin necesidad de
+recalcular las precedentes. La Figura \ref{fig:flujo} presenta la estructura general del
+procedimiento.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance=0.42cm,
+  etapa/.style={rectangle, rounded corners=2pt, draw=gray!60, fill=gray!8,
+                text width=8.2cm, minimum height=0.72cm, align=left, font=\small},
+  grupo/.style={rectangle, rounded corners=3pt, draw=acento!70, thick, inner sep=4pt},
+  flecha/.style={-{Latex[length=2mm]}, gray!70}
+]
+\node[etapa] (l1) {\textbf{1.} Descarga del conjunto de datos};
+\node[etapa, below=of l1] (l2) {\textbf{2.} Auditoría inicial y estandarización de nombres};
+\node[etapa, below=of l2, fill=acento!10] (l3) {\textbf{3.} Selección de variables: fuga y redundancia};
+\node[etapa, below=of l3] (l4) {\textbf{4.} Eliminación de registros duplicados};
+\node[etapa, below=of l4, fill=acento!10] (l5) {\textbf{5.} Partición estratificada 80/20};
+\node[etapa, below=of l5] (l6) {\textbf{6.} Columnas con exceso de valores ausentes};
+\node[etapa, below=of l6] (l7) {\textbf{7.} Acotamiento de valores atípicos};
+\node[etapa, below=of l7] (l8) {\textbf{8.} Imputación de valores faltantes};
+\node[etapa, below=of l8] (l9) {\textbf{9.} Codificación de variables categóricas};
+\node[etapa, below=of l9] (l10) {\textbf{10.} Ordenamiento y escritura de los archivos};
+\node[etapa, below=of l10] (l11) {\textbf{11.} Validación del resultado};
+
+\foreach \a/\b in {l1/l2, l2/l3, l3/l4, l4/l5, l5/l6, l6/l7, l7/l8, l8/l9, l9/l10, l10/l11}
+  \draw[flecha] (\a) -- (\b);
+
+\node[anchor=west, font=\scriptsize\itshape, text=acento, align=left]
+  at ([xshift=3mm]l3.east) {Determina qué\\información es\\admisible};
+\node[anchor=west, font=\scriptsize\itshape, text=acento, align=left]
+  at ([xshift=3mm]l5.east) {A partir de aquí\\todo se calcula\\sólo con el 80\%};
+\end{tikzpicture}
+\caption{Estructura secuencial del preprocesamiento. Las etapas destacadas corresponden a las dos
+decisiones que condicionan la validez del resultado.}
+\label{fig:flujo}
+\end{figure}
+
+La organización del presente documento sigue las tres dimensiones solicitadas: limpieza
+(Sección \ref{sec:limpieza}), transformación (Sección \ref{sec:transformacion}) y reducción de la
+dimensionalidad (Sección \ref{sec:reduccion}). No obstante, dado que la selección de variables
+por fuga de información constituye la decisión de mayor incidencia sobre el resultado final y
+antecede cronológicamente a las restantes etapas, se presenta de manera independiente en la
+Sección \ref{sec:fuga}.
+
+%============================================================================
+\section{Descripción del conjunto de datos}
+%============================================================================
+
+El conjunto de datos SUPPORT2 proviene del estudio \textit{Study to Understand Prognoses and
+Preferences for Outcomes and Risks of Treatments}, desarrollado en cinco hospitales de los Estados
+Unidos con el propósito de caracterizar el pronóstico de pacientes hospitalizados con
+enfermedades graves. El archivo original está conformado por 9{,}105 registros y 45 columnas,
+donde cada registro corresponde a un paciente hospitalizado.
+
+Los pacientes se distribuyen en ocho grupos diagnósticos: insuficiencia respiratoria aguda con
+sepsis, insuficiencia cardíaca congestiva, enfermedad pulmonar obstructiva crónica, cirrosis,
+cáncer de colon, cáncer de pulmón, coma y fallo multiorgánico con neoplasia.
+
+Las variables disponibles pueden agruparse en cinco categorías: datos demográficos y de contexto
+social, información diagnóstica, puntajes de severidad clínica medidos al tercer día del estudio,
+signos vitales y resultados de laboratorio, e indicadores de funcionalidad en actividades de la
+vida diaria. La Tabla \ref{tab:variables} presenta la totalidad de las variables con su
+descripción, tipo y proporción de valores ausentes.
+
+\input{tablas/variables.tex}
+
+El conjunto de datos contiene tres variables susceptibles de ser utilizadas como objetivo:
+\texttt{death}, que registra el fallecimiento en cualquier momento del seguimiento;
+\texttt{hospdead}, que registra el fallecimiento durante la hospitalización analizada; y
+\texttt{sfdm2}, que corresponde al nivel de discapacidad funcional evaluado en una entrevista
+posterior al alta. Se seleccionó \texttt{hospdead} por tratarse de un desenlace delimitado
+temporalmente y observable para la totalidad de los registros.
+
+La Figura \ref{fig:clases} muestra la distribución de la variable objetivo en el conjunto de
+entrenamiento. Se observa un desbalance de clases en el que los fallecimientos constituyen
+aproximadamente una cuarta parte de los casos, condición que deberá considerarse durante la
+evaluación del modelo.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\textwidth]{clases.png}
+\caption{Distribución de la variable objetivo \texttt{hospdead} en el conjunto de entrenamiento.}
+\label{fig:clases}
+\end{figure}
+
+%============================================================================
+\section{Auditoría inicial}
+%============================================================================
+
+Previo a cualquier modificación del conjunto de datos se realizó una auditoría destinada a
+establecer el estado inicial de la información. Este diagnóstico constituye el punto de
+referencia contra el cual se verifican posteriormente los efectos de cada etapa.
+
+La lectura del archivo requirió tres operaciones de normalización previas. En primer lugar, se
+declararon explícitamente los marcadores que deben interpretarse como valores ausentes
+(\texttt{?}, \texttt{NA}, \texttt{N/A}, cadena vacía y \texttt{null}), dado que de lo contrario
+serían tratados como texto válido y distorsionarían el conteo de faltantes. En segundo lugar, se
+estandarizaron los nombres de las columnas a minúsculas con guion bajo, debido a que
+identificadores como \texttt{num.co} contienen un punto que interfiere con la notación de acceso
+a atributos. Finalmente, se descartaron los registros completamente vacíos.
+
+A partir del conjunto normalizado se construyó una tabla de diagnóstico que reporta, para cada
+columna, su tipo de dato, el número y porcentaje de valores ausentes, y la cantidad de valores
+distintos. El cálculo del porcentaje de faltantes se apoya en que la media de una serie booleana
+equivale a la proporción de casos verdaderos, por lo que el promedio de los indicadores de
+ausencia expresa directamente dicha proporción.
+
+La auditoría reveló una distribución marcadamente heterogénea de valores ausentes. Mientras que
+variables como la edad, el sexo o el número de comorbilidades se encuentran completas, otras
+superan el cincuenta por ciento de datos faltantes, situación que condiciona su posterior
+tratamiento y motiva las decisiones documentadas en la Sección \ref{sec:limpieza}.
+
+%============================================================================
+\section{Selección de variables y fuga de información}
+\label{sec:fuga}
+%============================================================================
+
+\subsection{Definición del problema}
+
+Se denomina fuga de información a la presencia, dentro de las variables de entrada, de datos que
+no estarían disponibles en el momento en que el modelo debe emitir su predicción. Un modelo
+entrenado bajo esta condición alcanza un desempeño elevado durante la evaluación, pero dicho
+desempeño no es reproducible en condiciones reales de uso, dado que la información que lo
+sustenta sólo existe una vez conocido el desenlace.
+
+En el caso analizado, la fuga adopta dos formas distintas que se abordan por separado. La primera
+corresponde a columnas que contienen, de manera directa o indirecta, la respuesta que se pretende
+predecir; su tratamiento se documenta en la presente sección. La segunda deriva del orden en que
+se ejecutan las operaciones del preprocesamiento y se documenta en la Sección \ref{sec:orden}.
+
+La identificación de las columnas afectadas se realizó mediante el análisis de la ficha oficial
+del conjunto de datos, la revisión del momento en que cada variable se registra durante la
+hospitalización, y la verificación empírica de su relación con la variable objetivo.
+
+\subsection{Variables que constituyen el desenlace}
+
+Un primer conjunto de columnas corresponde a mediciones del mismo fenómeno que se desea predecir.
+
+La variable \texttt{death} registra el fallecimiento del paciente en cualquier momento del
+seguimiento, período que puede extenderse durante años. Dado que todo paciente que fallece durante
+la hospitalización fallece necesariamente dentro del seguimiento, ambas variables responden
+esencialmente a la misma pregunta.
+
+La variable \texttt{sfdm2} consigna el nivel de discapacidad funcional evaluado mediante una
+entrevista realizada aproximadamente dos meses después del ingreso. Dicha entrevista sólo pudo
+realizarse a los pacientes que sobrevivieron hasta esa fecha, por lo que la mera presencia de un
+valor en esta columna constituye un indicador de supervivencia.
+
+Las variables \texttt{surv2m} y \texttt{surv6m} corresponden a la probabilidad de supervivencia
+estimada por el modelo estadístico del propio estudio SUPPORT, mientras que \texttt{prg2m} y
+\texttt{prg6m} recogen la estimación subjetiva formulada por el médico tratante. Su incorporación
+como variables de entrada implicaría reproducir el resultado de un modelo previo o el juicio de un
+especialista, en lugar de aprender a partir de las mediciones clínicas.
+
+\subsection{Variables conocidas únicamente al alta}
+
+Un segundo conjunto de columnas registra información generada durante la hospitalización, cuyo
+valor definitivo sólo se conoce una vez concluido el episodio.
+
+Las variables \texttt{charges}, \texttt{totcst} y \texttt{totmcst} corresponden al cobro y al
+costo total de la hospitalización. Estas cifras se consolidan al momento del alta, de modo que no
+se encuentran disponibles mientras el paciente permanece internado. La diferencia observada entre
+grupos resulta considerable: el cobro promedio asciende a 92{,}638 unidades monetarias entre los
+pacientes fallecidos frente a 48{,}683 entre los sobrevivientes, diferencia atribuible a la
+duración y la intensidad del episodio.
+
+La variable \texttt{avtisst} corresponde al promedio del puntaje de intervenciones terapéuticas
+entre los días 3 y 25 del estudio. Al promediarse a lo largo de la estancia, su valor queda
+determinado por la duración de esta última.
+
+Las variables \texttt{dnr} y \texttt{dnrday} registran la orden de no reanimar y la fecha en que
+fue suscrita. Esta orden no constituye un dato clínico de ingreso sino una decisión adoptada
+durante la hospitalización, con frecuencia cuando el equipo médico ya ha constatado el deterioro
+del paciente. La Tabla \ref{tab:dnr} evidencia esta relación.
+
+\begin{table}[H]
+\centering
+\caption{Distribución de la orden de no reanimar según el desenlace hospitalario}
+\label{tab:dnr}
+\small
+\begin{tabular}{p{4.5cm} r r}
+\toprule
+\textbf{Estado de la orden} & \textbf{Sobrevive} & \textbf{Fallece} \\
+\midrule
+Suscrita antes del ingreso  & 2.4\%  & 3.2\%  \\
+Suscrita después del ingreso & 16.8\% & 77.9\% \\
+Sin orden de no reanimar     & 80.8\% & 18.9\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Entre los pacientes que fallecen durante la hospitalización, el 77.9\% cuenta con una orden
+suscrita con posterioridad al ingreso, frente al 16.8\% de quienes sobreviven. Esta asociación no
+refleja una capacidad predictiva de la variable sino la anticipación del desenlace por parte del
+personal médico.
+
+Se conservó en cambio la variable \texttt{hday}, correspondiente al día de hospitalización en que
+el paciente ingresó al estudio. Aunque presenta diferencias entre grupos, su valor se conoce en el
+momento del ingreso y constituye por tanto información legítima.
+
+\subsection{Variables redundantes}
+
+Un tercer conjunto de columnas no introduce fuga de información, pero duplica contenido ya
+presente en otras variables.
+
+La tabulación cruzada entre \texttt{dzgroup} y \texttt{dzclass} evidencia que cada categoría de la
+primera corresponde invariablemente a una única categoría de la segunda, sin excepciones. En
+consecuencia, \texttt{dzclass} constituye un agrupamiento derivado que incrementa la
+dimensionalidad sin aportar información adicional. Se conservó \texttt{dzgroup} por presentar
+mayor detalle.
+
+De manera análoga, la variable \texttt{adlsc} corresponde, conforme a la documentación oficial, a
+una versión calibrada e imputada de \texttt{adls}. Mantener ambas implicaría duplicar la misma
+información y, adicionalmente, imputar el 31\% de valores ausentes que presenta la versión
+original. Se conservó \texttt{adlsc}.
+
+Se evaluó asimismo la relación entre \texttt{sps} y \texttt{aps}, ambos puntajes de severidad
+medidos al tercer día. La correlación observada resultó elevada pero inferior a la unidad, por lo
+que no constituyen mediciones equivalentes y ambas fueron conservadas.
+
+\subsection{Resumen de las exclusiones}
+
+La Tabla \ref{tab:exclusiones} consigna la totalidad de las columnas excluidas junto con el motivo
+correspondiente.
+
+\input{tablas/exclusiones.tex}
+
+\subsection{Verificación empírica del efecto}
+\label{sec:evidencia}
+
+Con el propósito de cuantificar la incidencia de las exclusiones, se entrenó una regresión
+logística bajo dos configuraciones idénticas en todo excepto en la presencia de las seis columnas
+posteriores al ingreso. Los resultados se presentan en la Tabla \ref{tab:fuga}.
+
+\begin{table}[H]
+\centering
+\caption{Efecto de las variables posteriores al ingreso sobre el desempeño del modelo}
+\label{tab:fuga}
+\small
+\begin{tabular}{p{6.5cm} r r}
+\toprule
+\textbf{Configuración} & \textbf{Columnas} & \textbf{AUC} \\
+\midrule
+Con las variables posteriores al ingreso & 48 & 0.948 \\
+Sin las variables posteriores al ingreso & 41 & 0.879 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La diferencia observada resulta determinante para la interpretación del resultado. Un área bajo la
+curva de 0.948 en la predicción de mortalidad hospitalaria excede el desempeño reportado para los
+modelos publicados sobre este mismo conjunto de datos, los cuales se sitúan entre 0.80 y 0.86. El
+valor de 0.879 obtenido tras la exclusión se encuentra en cambio dentro del rango esperable.
+
+La reducción del desempeño no debe interpretarse por tanto como una pérdida de capacidad
+predictiva, sino como la eliminación de una ventaja ilegítima: el modelo inicial no predecía el
+fallecimiento a partir de información clínica, sino que lo inferían a partir de registros
+generados como consecuencia del propio desenlace.
+
+\printbibliography[title={Referencias}]
+
+\end{document}

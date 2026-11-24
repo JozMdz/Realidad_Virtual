@@ -27,6 +27,7 @@ jobs:
           working_directory: documentos
           root_file: |
             00_prueba.tex
+            01_preprocesamiento.tex
 
       - name: Publicar los PDF
         uses: actions/upload-artifact@v4

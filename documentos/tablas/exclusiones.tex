@@ -1,0 +1,26 @@
+\begin{table}[H]
+\centering
+\caption{Columnas excluidas del conjunto de modelado}
+\label{tab:exclusiones}
+\small
+\begin{tabular}{p{2.2cm} p{8.5cm}}
+\toprule
+\textbf{Columna} & \textbf{Motivo de exclusión} \\
+\midrule
+\texttt{death} & otra variable de muerte, casi la misma pregunta que hospdead \\
+\texttt{sfdm2} & otra variable objetivo, medida despues del alta \\
+\texttt{surv2m} & estima el desenlace: supervivencia a 2 meses segun el modelo SUPPORT \\
+\texttt{surv6m} & estima el desenlace: supervivencia a 6 meses segun el modelo SUPPORT \\
+\texttt{prg2m} & estima el desenlace: supervivencia a 2 meses segun el medico tratante \\
+\texttt{prg6m} & estima el desenlace: supervivencia a 6 meses segun el medico tratante \\
+\texttt{dzclass} & redundante: es un resumen derivado de dzgroup \\
+\texttt{adls} & redundante: adlsc ya contiene la misma informacion, sin huecos \\
+\texttt{dnr} & la orden de no reanimar suele firmarse cuando el paciente ya esta empeorando \\
+\texttt{dnrday} & dia de la orden de no reanimar: misma razon que dnr \\
+\texttt{charges} & cobro total de la hospitalizacion, se conoce recien al dar de alta \\
+\texttt{totcst} & costo total de la hospitalizacion, se conoce recien al dar de alta \\
+\texttt{totmcst} & costo total detallado, se conoce recien al dar de alta \\
+\texttt{avtisst} & puntaje TISS promedio dias 3-25, que la ficha define como metodo de costeo \\
+\bottomrule
+\end{tabular}
+\end{table}
