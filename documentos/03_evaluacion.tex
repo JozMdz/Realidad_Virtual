@@ -75,23 +75,24 @@ La Tabla \ref{tab:metricas} presenta el desempeño de los cuatro modelos.
 
 \input{tablas/metricas.tex}
 
-La regresión logística obtiene el mayor valor en AUC, exactitud, recall y F1. El árbol de decisión
-se sitúa en segundo lugar y el método de vecinos en tercero.
+La regresión logística obtiene el mayor valor en las cinco métricas. El árbol de decisión se sitúa
+en segundo lugar según AUC, exactitud y F1, y el método de vecinos en tercero.
 
 Tres observaciones merecen atención.
 
-La primera concierne a la referencia trivial. Su exactitud de 0.741 supera en apenas ocho
-centésimas a la del método de vecinos, pese a que este último procesa cuarenta variables. Su AUC,
-en cambio, es 0.500 frente a 0.835: la diferencia entre ambos modelos resulta evidente en una
+La primera concierne a la referencia trivial. Su exactitud de 0.741 queda apenas seis centésimas
+por debajo de la del método de vecinos, pese a que este último procesa cuarenta variables. Su AUC,
+en cambio, es 0.500 frente a 0.835: la distancia entre ambos modelos resulta evidente en una
 métrica y casi imperceptible en la otra.
 
 La segunda se refiere al recall. Ningún modelo supera 0.52. El mejor de ellos identifica
 aproximadamente la mitad de los pacientes que fallecen, cuestión que se analiza en la
 Sección \ref{sec:recall}.
 
-La tercera corresponde al método de vecinos, cuya precisión de 0.721 supera a la del árbol
-mientras su recall es notablemente inferior. El modelo emite menos señalamientos y acierta en una
-proporción mayor de ellos, a costa de omitir más casos.
+La tercera corresponde al orden entre el árbol y el método de vecinos, que se invierte según la
+métrica: la precisión de vecinos, 0.721, supera a la del árbol, 0.701, mientras su recall es
+notablemente inferior. El método de vecinos emite menos señalamientos y acierta en una proporción
+mayor de ellos, a costa de omitir más casos.
 
 \subsection{Curvas ROC}
 
@@ -144,9 +145,10 @@ distribución de valores en lugar de un único resultado.
 \input{tablas/particiones.tex}
 
 La regresión logística obtiene el mayor AUC en las diez particiones, sin excepción. Las
-desviaciones son del orden de dos centésimas en los tres modelos, magnitud comparable a la
-diferencia entre el árbol y el método de vecinos, lo que impide distinguirlos a partir de estos
-valores.
+desviaciones se sitúan entre 0.015 y 0.017 en los tres modelos, magnitud superior a la diferencia
+de 0.012 que separa al árbol del método de vecinos sobre el conjunto de prueba. En las propias
+particiones, los promedios de ambos difieren en 0.000043, de modo que no resultan distinguibles a
+partir de estos valores.
 
 Los promedios de la validación cruzada resultan inferiores a los obtenidos sobre el conjunto de
 prueba. La diferencia es esperable: cada partición entrena con el 90\% de los registros de
@@ -176,7 +178,7 @@ en pareadas: cada partición constituye una prueba que los tres modelos rindiero
 condiciones.
 
 La prueba de Friedman contrasta la hipótesis de que los tres modelos presentan el mismo
-desempeño. Su resultado fue $\chi^2 = 15.000$ con $p = 0.0006$, de modo que la hipótesis se
+desempeño. Su resultado fue \input{tablas/friedman.tex}\unskip, de modo que la hipótesis se
 rechaza: existen diferencias entre los modelos.
 
 Establecida la existencia de diferencias, la prueba de Wilcoxon de rangos con signo determina
@@ -245,9 +247,10 @@ El recall asciende de 0.519 a 0.790, mientras la precisión desciende de 0.736 a
 pasa a detectar cuatro de cada cinco fallecimientos, pero entre los pacientes que señala la
 proporción de aciertos se reduce.
 
-El AUC permanece en 0.879. El resultado es coherente: la ponderación no modifica el ordenamiento
-de los pacientes por riesgo, que es lo que el AUC mide, sino el umbral a partir del cual ese
-ordenamiento se traduce en una decisión.
+El AUC se mantiene en 0.879, con una variación inferior a dos diezmilésimas. El resultado es
+coherente: la ponderación no altera de manera apreciable el ordenamiento de los pacientes por
+riesgo, que es lo que el AUC mide, sino el umbral a partir del cual ese ordenamiento se traduce en
+una decisión.
 
 La elección entre ambas configuraciones no se resuelve mediante criterios estadísticos. Requiere
 determinar el costo relativo de una falsa alarma frente al de un fallecimiento no detectado,

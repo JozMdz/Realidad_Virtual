@@ -82,7 +82,7 @@ que lo reducen.
 
 Se empleó la penalización L2, que limita la magnitud de los coeficientes y previene que el modelo
 asigne un peso desproporcionado a una variable concreta. El número máximo de iteraciones se fijó
-en 3000 para asegurar la convergencia del procedimiento de optimización.
+en 3000, con holgura suficiente: sobre estos datos la optimización converge en 17 iteraciones.
 
 La estandarización de las variables resulta necesaria en este caso, y el motivo es precisamente la
 penalización. Al castigar los coeficientes de mayor magnitud, una variable medida en unidades
@@ -164,6 +164,7 @@ Se omite por ese motivo.
 
 %============================================================================
 \section{Vecinos más cercanos}
+\label{sec:vecinos}
 %============================================================================
 
 \subsection{Mecanismo de decisión}
@@ -241,10 +242,12 @@ desempeño que se obtiene sin aprender nada.
 El entrenamiento se realizó exclusivamente sobre el conjunto de entrenamiento, reservando el de
 prueba para la evaluación documentada en el informe correspondiente.
 
-La comparación entre modelos se efectuó mediante validación cruzada estratificada de cinco
-particiones. El procedimiento divide el conjunto de entrenamiento en cinco bloques que conservan
-la proporción de clases, entrena con cuatro y evalúa sobre el restante, repitiendo la operación
-cinco veces. El promedio resultante es más estable que el obtenido de una partición única.
+La comparación entre modelos se efectuó mediante validación cruzada estratificada de diez
+particiones. El procedimiento divide el conjunto de entrenamiento en diez bloques que conservan la
+proporción de clases, entrena con nueve y evalúa sobre el restante, repitiendo la operación diez
+veces. El promedio resultante es más estable que el obtenido de una partición única. La selección
+del número de vecinos, documentada en la Sección \ref{sec:vecinos}, empleó cinco particiones por
+tratarse de una búsqueda sobre un único modelo.
 
 El escalado se integró como etapa inicial de un flujo conjunto con el modelo, y no como
 transformación previa aplicada a los archivos. La distinción no es formal: dentro de la validación

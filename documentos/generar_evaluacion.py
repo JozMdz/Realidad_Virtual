@@ -120,10 +120,12 @@ def auc_por_particion(X, y):
 def tabla_particiones(marcas):
     """Tabla del AUC por particion con promedio y desviacion."""
     filas = [[i + 1] + [f"{marcas[c].iloc[i]:.3f}" for c in marcas] for i in range(len(marcas))]
+    rangos = marcas.rank(axis=1, ascending=False).mean()
     extra = ("\\midrule\n"
              + "Promedio & " + " & ".join(f"\\textbf{{{marcas[c].mean():.3f}}}" for c in marcas)
              + " \\\\\n"
-             + "Desviación & " + " & ".join(f"{marcas[c].std():.3f}" for c in marcas) + " \\\\\n")
+             + "Desviación & " + " & ".join(f"{marcas[c].std():.3f}" for c in marcas) + " \\\\\n"
+             + "Rango promedio & " + " & ".join(f"{rangos[c]:.1f}" for c in marcas) + " \\\\\n")
     escribir_tabla("particiones.tex",
                    "AUC obtenido por cada modelo en las diez particiones de validación cruzada",
                    "tab:particiones", "l r r r",
@@ -144,6 +146,9 @@ def tabla_pruebas(marcas, ajustados, Xp, yp):
         p_m = min(binomtest(solo_a, solo_a + solo_b, 0.5).pvalue * 3, 1.0)
         filas.append((f"{a} vs. {b}", f"{p_w:.4f}" + ("*" if p_w < 0.05 else ""),
                       f"{solo_a} / {solo_b}", f"{p_m:.4f}" + ("*" if p_m < 0.05 else "")))
+
+    (TABLAS / "friedman.tex").write_text(
+        f"$\\chi^2 = {chi2:.3f}$ con $p = {p_friedman:.4f}$", encoding="utf-8")
 
     escribir_tabla("pruebas.tex",
                    "Comparación por pares. Los valores $p$ incluyen corrección de Bonferroni "
