@@ -292,7 +292,7 @@ def main():
             ix, iy, iw, ih = encajar(*extra[:5])
             sl.shapes.add_picture(extra[0], Inches(ix), Inches(iy),
                                   width=Inches(iw), height=Inches(ih))
-            leyenda(sl, ix, iy + ih + 0.10, iw, "Figura", extra[5], pt=11)
+            leyenda(sl, ix, iy + ih + 0.10, iw, "Figura", extra[5], pt=10)
         elif tipo == "figura":
             sl = prs.slides.add_slide(prs.slide_layouts[L_DOS])
             t = sl.shapes.title
@@ -311,7 +311,7 @@ def main():
             ix, iy, iw, ih = encajar(*extra[:5])
             sl.shapes.add_picture(extra[0], Inches(ix), Inches(iy),
                                   width=Inches(iw), height=Inches(ih))
-            leyenda(sl, ix, iy + ih + 0.10, iw, "Figura", extra[5])
+            leyenda(sl, ix, iy + ih + 0.10, iw, "Figura", extra[5], pt=9)
         else:
             sl = prs.slides.add_slide(prs.slide_layouts[L_TRES])
             poner_titulo(sl, titulo, lineas=1, ancho=7.5, tope=34)
@@ -322,7 +322,7 @@ def main():
             tope = 6.25
             if extra and extra[0] == "tabla":
                 _, enc, filas, nota = extra
-                h_tab = 0.30 + 0.27 * len(filas) + (0.30 if nota else 0.0)
+                h_tab = 0.30 + 0.27 * len(filas) + (0.58 if nota else 0.0)
                 disp = tope - y - h_tab - 0.28
             else:
                 disp = tope - y
