@@ -103,6 +103,38 @@ def encajar(ruta, x, y, w, h):
     return x + (w - ww) / 2.0, y + (h - hh) / 2.0, ww, hh
 
 
+IDIOMA = "es-MX"
+
+
+def fijar_idioma(raiz, lang=IDIOMA):
+    """Marca como espanol de Mexico todo el texto de una parte del archivo."""
+    for r in raiz.iter(qn("a:r")):
+        if r.find(qn("a:rPr")) is None:
+            r.insert(0, r.makeelement(qn("a:rPr"), {}))
+    for tag in ("a:rPr", "a:endParaRPr", "a:defRPr"):
+        for el in raiz.iter(qn(tag)):
+            el.set("lang", lang)
+            el.attrib.pop("altLang", None)
+
+
+def normalizar_idioma_archivo(ruta, lang=IDIOMA):
+    """Completa el idioma en las partes XML que no pasan por el modelo de objetos."""
+    import re, zipfile
+    patron = re.compile(r"<a:(rPr|endParaRPr|defRPr)\b(?![^>]*\blang=)")
+    temporal = ruta + ".tmp"
+    with zipfile.ZipFile(ruta) as viejo, \
+            zipfile.ZipFile(temporal, "w", zipfile.ZIP_DEFLATED) as nuevo:
+        for info in viejo.infolist():
+            datos = viejo.read(info.filename)
+            if info.filename.endswith(".xml"):
+                texto = datos.decode("utf-8")
+                cambiado = patron.sub(r'<a:\1 lang="%s"' % lang, texto)
+                if cambiado != texto:
+                    datos = cambiado.encode("utf-8")
+            nuevo.writestr(info, datos)
+    os.replace(temporal, ruta)
+
+
 def caja(slide, x, y, w, h):
     tb = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
     tf = tb.text_frame
@@ -399,6 +431,11 @@ def main():
             r2.text = "\nMtro. José Guadalupe Méndez Pérez"
             r2.font.size = Pt(18)
 
+    for parte in prs.part.package.iter_parts():
+        raiz = getattr(parte, "_element", None)
+        if raiz is not None:
+            fijar_idioma(raiz)
+
     props = prs.core_properties
     props.author = "Mtro. José Guadalupe Méndez Pérez"
     props.last_modified_by = "Mtro. José Guadalupe Méndez Pérez"
@@ -410,6 +447,7 @@ def main():
     props.keywords = ""
 
     prs.save(SAL)
+    normalizar_idioma_archivo(SAL)
     print("diapositivas:", len(prs.slides), "->", SAL)
 
 
